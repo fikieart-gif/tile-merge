@@ -158,22 +158,31 @@
     }
     .app-footer {
       position: relative;
-      z-index: 2147483646;
+      z-index: 1;
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
       width: calc(100% + 32px);
       max-width: none;
       margin-left: -16px;
       margin-right: -16px;
       margin-top: 16px;
-      padding: 12px 16px;
-      gap: 12px;
-      justify-content: space-between;
-      align-items: center;
+      margin-bottom: 0;
+      padding: 12px 16px 8px;
+      gap: 0;
       border-radius: 16px 16px 0 0;
       background: #1a1a23;
       flex-shrink: 0;
       box-sizing: border-box;
       align-self: stretch;
+    }
+    .app-footer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
     }
     .app-footer-stats {
       display: flex;
@@ -231,45 +240,42 @@
       min-width: 0;
       flex-shrink: 0;
     }
-    .math-profile-dock {
-      position: fixed;
-      left: 50%;
-      bottom: max(10px, env(safe-area-inset-bottom, 0px));
-      transform: translateX(-50%);
-      z-index: 2147483647;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 14px;
-      background: rgba(16, 16, 22, 0.94);
-      border: 1px solid #343446;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
-      pointer-events: auto;
-      max-width: min(380px, calc(100vw - 24px));
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
     .math-profile-switch {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
+    }
+    .math-profile-bar {
+      position: relative;
+      z-index: 2147483647;
+      flex-shrink: 0;
+      align-self: stretch;
+      box-sizing: border-box;
+      width: calc(100% + 32px);
+      margin-left: -16px;
+      margin-right: -16px;
+      margin-top: 0;
+      padding: 0 16px 12px;
+      background: #1a1a23;
+      pointer-events: auto;
+    }
+    .bet-sheet-backdrop.visible ~ .math-profile-bar {
+      background: #131317;
     }
     .math-profile-btn {
       flex: 1 1 0;
       min-width: 0;
-      padding: 8px 18px;
-      min-height: 40px;
-      border: 1px solid #3a3a48;
-      border-radius: 11px;
-      background: #181820;
-      color: #a6a6b8;
+      padding: 5px 10px;
+      min-height: 28px;
+      border: 1px solid #2e2e3a;
+      border-radius: 8px;
+      background: #14141c;
+      color: #8b8b9e;
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 21px;
+      font-size: 13px;
       font-weight: 600;
-      line-height: 24px;
+      line-height: 16px;
       letter-spacing: 0.02em;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -297,10 +303,14 @@
       object-position: left center;
     }
     .game {
-      /* Высота футера под оверлей листа ставки (padding 12×2 + ряд ~16px; при переносе строки поднять). */
-      --app-footer-clearance: 48px;
+      /* Высота футера под оверлей листа ставки (лого/статы + ряд Math). */
+      --app-footer-clearance: 76px;
       /* Зазор между кнопкой «СТАРТ» и верхом футера. */
       --bet-sheet-footer-gap: 20px;
+      /* Резерв под ряд Math2/Math3 — лист ставки не должен на него наезжать. */
+      --math-profile-bar-height: 44px;
+      --math-profile-bar-gap: 0px;
+      --math-profile-bar-clearance: var(--math-profile-bar-height);
       position: relative;
       width: 100%;
       max-width: 380px;
@@ -755,11 +765,12 @@
       border-bottom-right-radius: 0;
       overflow: hidden;
       border: 1px solid #242431;
+      border-bottom: none;
       background: linear-gradient(180deg, #1a1a23 0%, #131317 100%);
       box-shadow: 0 -10px 34px 0 rgba(0, 0, 0, 0.25);
       padding: 20px;
-      /* Футер перекрывается модалкой, поэтому его высота не участвует в нижнем отступе кнопки. */
       padding-bottom: var(--bet-sheet-footer-gap, 20px);
+      margin-bottom: var(--math-profile-bar-clearance);
       transform: translateY(100%);
       transition: transform 0.06s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -1165,13 +1176,36 @@
         border-top-right-radius: 0;
       }
       .app-footer {
-        width: 100%;
-        max-width: none;
-        margin-left: 0;
-        margin-right: 0;
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        padding-bottom: 6px;
+      }
+      .math-profile-bar {
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        margin-right: -16px;
         padding-left: max(16px, env(safe-area-inset-left, 0px));
         padding-right: max(16px, env(safe-area-inset-right, 0px));
         padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      }
+      .math-profile-switch {
+        gap: 6px;
+      }
+      .math-profile-btn {
+        padding: 3px 8px;
+        min-height: 22px;
+        border-radius: 6px;
+        font-size: 11px;
+        line-height: 14px;
+      }
+      .game {
+        --app-footer-clearance: 68px;
+        --math-profile-bar-height: calc(34px + env(safe-area-inset-bottom, 0px));
+        --math-profile-bar-gap: 0px;
+        --math-profile-bar-clearance: var(--math-profile-bar-height);
       }
     }
 
@@ -1378,6 +1412,7 @@
   </div>
 
   <footer class="app-footer" role="contentinfo" aria-label="Нижняя панель">
+    <div class="app-footer-top">
       <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
       <div class="app-footer-stats">
         <div class="app-footer-stat" title="Ставки">
@@ -1397,9 +1432,9 @@
           <span class="app-footer-stat-value" id="footerRtpValue">97%</span>
         </div>
       </div>
-    </footer>
+    </div>
+  </footer>
 
-  <!-- Лист «Сумма ставки» (первый заход) -->
   <div class="bet-sheet-backdrop" id="betSheetBackdrop" aria-hidden="true">
     <div class="bet-sheet" id="betSheetPanel" role="dialog" aria-labelledby="betSheetTitle" aria-modal="true">
       <h2 class="bet-sheet-title" id="betSheetTitle">Сумма ставки</h2>
@@ -1459,14 +1494,14 @@
       <span class="cashout-celebration-coeff" id="cashoutCelebrationCoeff" aria-label="Итоговый множитель">x0.00</span>
     </div>
   </div>
-</div>
-</div>
 
-<div class="math-profile-dock" role="group" aria-label="Вариант математики">
-  <div class="math-profile-switch">
-    <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
-    <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
+  <div class="math-profile-bar">
+    <div class="math-profile-switch" role="group" aria-label="Вариант математики">
+      <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
+      <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
+    </div>
   </div>
+</div>
 </div>
 
 <script src="assets/game-math.js"></script>
