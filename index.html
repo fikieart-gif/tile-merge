@@ -223,6 +223,46 @@
       letter-spacing: 0.01px;
       font-variant-numeric: tabular-nums;
     }
+    .app-footer-leading {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+    .math-profile-switch {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .math-profile-btn {
+      padding: 2px 7px;
+      border: 1px solid #2e2e3a;
+      border-radius: 6px;
+      background: #14141c;
+      color: #8b8b9e;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 14px;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .math-profile-btn:hover {
+      color: #c8c8d8;
+      border-color: #3a3a48;
+    }
+    .math-profile-btn.is-active {
+      color: #24f49d;
+      border-color: rgba(36, 244, 157, 0.45);
+      background: rgba(36, 244, 157, 0.08);
+    }
+    .math-profile-btn:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+    }
     .app-footer-logo {
       display: block;
       height: 16px;
@@ -1314,7 +1354,13 @@
   </div>
 
   <footer class="app-footer" role="contentinfo" aria-label="Нижняя панель">
-      <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
+      <div class="app-footer-leading">
+        <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
+        <div class="math-profile-switch" role="group" aria-label="Вариант математики">
+          <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
+          <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
+        </div>
+      </div>
       <div class="app-footer-stats">
         <div class="app-footer-stat" title="Ставки">
           <span class="app-footer-stat-icon" aria-hidden="true">
@@ -1401,22 +1447,59 @@
 <script src="assets/game-math.js"></script>
 <script src="assets/js/merge-flight.js?v=71"></script>
 <script>
-  const {
-    MAX_LEVEL,
-    MIN_BET,
-    TILE_CRASH,
-    TILE_BONUS,
-    BONUS_TILE_COEFF,
-    COEFF_BY_LEVEL,
-    getCurrentStage,
-    pickTileForEmptyCell,
-    applyGravityWithSpawnMask,
-    calcRoundCoeff,
-    isGridFullNoPairs,
-    findPairs,
-    coeffGainLabelForMerge,
-    mergeLevelsFromPairs,
-  } = window.MergeGameMath;
+  let MAX_LEVEL, MIN_BET, TILE_CRASH, TILE_BONUS, BONUS_TILE_COEFF, COEFF_BY_LEVEL;
+  let getCurrentStage, pickTileForEmptyCell, applyGravityWithSpawnMask, calcRoundCoeff;
+  let isGridFullNoPairs, findPairs, coeffGainLabelForMerge, mergeLevelsFromPairs;
+
+  const MATH_PROFILE_STORAGE_KEY = "mergeMvpMathProfile";
+
+  function bindMathApi(m) {
+    MAX_LEVEL = m.MAX_LEVEL;
+    MIN_BET = m.MIN_BET;
+    TILE_CRASH = m.TILE_CRASH;
+    TILE_BONUS = m.TILE_BONUS;
+    BONUS_TILE_COEFF = m.BONUS_TILE_COEFF;
+    COEFF_BY_LEVEL = m.COEFF_BY_LEVEL;
+    getCurrentStage = m.getCurrentStage;
+    pickTileForEmptyCell = m.pickTileForEmptyCell;
+    applyGravityWithSpawnMask = m.applyGravityWithSpawnMask;
+    calcRoundCoeff = m.calcRoundCoeff;
+    isGridFullNoPairs = m.isGridFullNoPairs;
+    findPairs = m.findPairs;
+    coeffGainLabelForMerge = m.coeffGainLabelForMerge;
+    mergeLevelsFromPairs = m.mergeLevelsFromPairs;
+  }
+
+  function updateMathProfileButtons(activeId) {
+    document.querySelectorAll(".math-profile-btn").forEach(function (btn) {
+      const isActive = btn.getAttribute("data-profile") === activeId;
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
+
+  function switchMathProfile(profileId) {
+    if (isAnimating) return;
+    if (!window.MergeGameMath.setActiveProfile(profileId)) return;
+    bindMathApi(window.MergeGameMath);
+    try {
+      localStorage.setItem(MATH_PROFILE_STORAGE_KEY, profileId);
+    } catch (e) {}
+    updateMathProfileButtons(profileId);
+    hideCashoutCelebrationOverlay();
+    resetSession();
+  }
+
+  (function initMathProfile() {
+    let saved = "math3";
+    try {
+      const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
+      if (stored === "math2" || stored === "math3") saved = stored;
+    } catch (e) {}
+    window.MergeGameMath.setActiveProfile(saved);
+    bindMathApi(window.MergeGameMath);
+    updateMathProfileButtons(saved);
+  })();
 
   /** После подтверждения листа в UI ставки/выигрыша показываются суммы вместо «...» (localStorage). */
   const BET_SHEET_STORAGE_KEY = "mergeMvpBetSheetSeen";
@@ -3316,6 +3399,12 @@
   }
 
   stepButton.addEventListener("click", playRound);
+  document.getElementById("mathProfileMath3").addEventListener("click", function () {
+    switchMathProfile("math3");
+  });
+  document.getElementById("mathProfileMath2").addEventListener("click", function () {
+    switchMathProfile("math2");
+  });
   cashoutButton.addEventListener("click", cashout);
 
   document.getElementById("betSheetPanel").addEventListener("click", function (e) {

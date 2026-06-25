@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Подключается до основного скрипта в index.html.
+ * Профили Math2 / Math3 — переключение через setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -9,47 +9,8 @@
   const MIN_BET = 1;
   const TILE_CRASH = -1;
   const TILE_BONUS = -2;
-  /** При краше итоговый коэффициент × 0 = 0 (игрок ничего не получает). */
   const CRASH_MULT = 0;
-
-  function det01(seedA, seedB) {
-    const x = Math.imul(seedA | 0, 0x9e3779b1) ^ Math.imul(seedB | 0, 0x85ebca6b);
-    const t = (x ^ (x >>> 16)) >>> 0;
-    return t / 4294967296;
-  }
-
-  // ─── Коэффициенты по уровням: геометрическая прогрессия C1 × G^(lvl-1) ───
-  const C1 = 0.02905;
-  const G  = 1.1823;
-  const COEFF_BY_LEVEL = (function () {
-    const result = {};
-    for (let lvl = 1; lvl <= MAX_LEVEL; lvl++) {
-      result[lvl] = C1 * Math.pow(G, lvl - 1);
-    }
-    return result;
-  })();
-
-  /** Вклад одной бонус-ячейки в суммарный множитель. */
   const BONUS_TILE_COEFF = 1.01;
-
-  // ─── Три стадии игры ───────────────────────────────────────────────────────
-  // Стадия определяется по накопленному coeff сессии:
-  //   1: coeff < 0.1876
-  //   2: 0.1876 ≤ coeff < 0.5905
-  //   3: coeff ≥ 0.5905
-  const STAGE_THRESHOLDS = [0.1876, 0.5905];
-
-  // Параметр alpha геометрического распределения вероятностей для каждой стадии
-  const ALPHA_STAGES = [0.75384, 0.2064, 1.07238];
-
-  // ─── Коррекция по уже существующим тайлам ─────────────────────────────────
-  // Подавление пар: если уровень уже есть на поле — уменьшаем вес, иначе — увеличиваем
-  const FACTOR_EXISTING = 0.29088;
-  const FACTOR_NEW      = 4.32437;
-
-  // ─── Базовые вероятности спецтайлов ───────────────────────────────────────
-  const BONUS_P = 0.00985;
-  const BOMB_P  = 0.0743;
 
   const MERGE_GLOW_RGB_BY_LEVEL = {
     1:  "148 152 162",
@@ -66,6 +27,12 @@
     12: "255 205 95",
   };
 
+  function det01(seedA, seedB) {
+    const x = Math.imul(seedA | 0, 0x9e3779b1) ^ Math.imul(seedB | 0, 0x85ebca6b);
+    const t = (x ^ (x >>> 16)) >>> 0;
+    return t / 4294967296;
+  }
+
   function mergeGlowRgbForLevel(level) {
     if (level === TILE_CRASH) return "248 113 113";
     if (level === TILE_BONUS) return "251 191 36";
@@ -74,17 +41,14 @@
     return MERGE_GLOW_RGB_BY_LEVEL[k] || "120 130 160";
   }
 
-  function getCurrentStage(totalCoeff) {
-    if (totalCoeff < STAGE_THRESHOLDS[0]) return 1;
-    if (totalCoeff < STAGE_THRESHOLDS[1]) return 2;
-    return 3;
+  function buildCoeffByLevel(c1, g) {
+    const result = {};
+    for (let lvl = 1; lvl <= MAX_LEVEL; lvl++) {
+      result[lvl] = c1 * Math.pow(g, lvl - 1);
+    }
+    return result;
   }
 
-  /**
-   * Базовые вероятности уровней 1–10 для заданного alpha
-   * (геометрическое распределение, нормированное в сумму 1).
-   * raw[lvl] = e^(-alpha × (lvl-1)),  probs = raw / Σraw
-   */
   function getBaseProbs(alpha) {
     const raw = [];
     let sum = 0;
@@ -96,58 +60,149 @@
     return raw.map(function (r) { return r / sum; });
   }
 
-  /**
-   * Выбрать тайл для пустой ячейки.
-   *
-   * @param {number} stage          — текущая стадия (1–3)
-   * @param {number[]} existingLevels — текущие уровни на поле
-   * @param {boolean} bonusAlreadyAppeared — бонус уже появлялся в этой сессии (не используется в новой математике)
-   * @param {number} totalCoeff     — накопленный коэффициент
-   * @param {number} [roundNumber]  — номер текущего раунда (1-based)
-   */
-  function pickTileForEmptyCell(stage, existingLevels, bonusAlreadyAppeared, totalCoeff, roundNumber) {
-    // Модификаторы вероятностей по номеру раунда
-    let bonusProb = BONUS_P;
-    let bombProb  = BOMB_P;
-    const round = typeof roundNumber === "number" ? roundNumber : 99;
-    if (round <= 3) bombProb  *= 0.05;
-    if (round <= 1) bonusProb *= 0.1;
+  function createMathProfile(config) {
+    const COEFF_BY_LEVEL = buildCoeffByLevel(config.c1, config.g);
+    const stageThresholds = config.stageThresholds.slice();
+    const alphaStages = config.alphaStages.slice();
 
-    // Одним броском решаем: бонус / краш / числовой уровень
-    const r = Math.random();
-    if (r < bonusProb) return TILE_BONUS;
-    if (r < bonusProb + bombProb) return TILE_CRASH;
-
-    // Числовой уровень: строим взвешенное распределение
-    const alpha    = ALPHA_STAGES[stage - 1];
-    const baseProbs = getBaseProbs(alpha);
-
-    // Собираем флаги «уровень уже есть на поле»
-    const existsOnField = {};
-    for (let i = 0; i < existingLevels.length; i++) {
-      const l = existingLevels[i];
-      if (l > 0 && l <= 10) existsOnField[l] = true;
+    function getCurrentStage(totalCoeff) {
+      for (let i = 0; i < stageThresholds.length; i++) {
+        if (totalCoeff < stageThresholds[i]) return i + 1;
+      }
+      return stageThresholds.length + 1;
     }
 
-    // Применяем коррекционные факторы и нормируем
-    const w = [];
-    let wSum = 0;
-    for (let lvl = 1; lvl <= 10; lvl++) {
-      const factor = existsOnField[lvl] ? FACTOR_EXISTING : FACTOR_NEW;
-      const wi = baseProbs[lvl - 1] * factor;
-      w.push(wi);
-      wSum += wi;
+    function pickFactors(totalCoeff) {
+      if (totalCoeff < 1.0) return config.factorsBelowOne;
+      return config.factorsAboveOne;
     }
 
-    // Сэмплирование методом накопленных сумм (inverse CDF)
-    const rLvl = Math.random();
-    let acc = 0;
-    for (let lvl = 1; lvl <= 10; lvl++) {
-      acc += w[lvl - 1] / wSum;
-      if (rLvl <= acc) return lvl;
+    function pickTileForEmptyCell(stage, existingLevels, bonusAlreadyAppeared, totalCoeff, roundNumber) {
+      const round = typeof roundNumber === "number" ? roundNumber : 99;
+      let bonusProb = config.computeBonusProb(round, bonusAlreadyAppeared);
+      let bombProb = config.computeBombProb(totalCoeff, round);
+
+      const r = Math.random();
+      if (r < bonusProb) return TILE_BONUS;
+      if (r < bonusProb + bombProb) return TILE_CRASH;
+
+      const alpha = alphaStages[stage - 1];
+      const baseProbs = getBaseProbs(alpha);
+      const factors = pickFactors(totalCoeff);
+
+      const existsOnField = {};
+      for (let i = 0; i < existingLevels.length; i++) {
+        const l = existingLevels[i];
+        if (l > 0 && l <= 10) existsOnField[l] = true;
+      }
+
+      const w = [];
+      let wSum = 0;
+      for (let lvl = 1; lvl <= 10; lvl++) {
+        const factor = existsOnField[lvl] ? factors.existing : factors.new;
+        const wi = baseProbs[lvl - 1] * factor;
+        w.push(wi);
+        wSum += wi;
+      }
+
+      const rLvl = Math.random();
+      let acc = 0;
+      for (let lvl = 1; lvl <= 10; lvl++) {
+        acc += w[lvl - 1] / wSum;
+        if (rLvl <= acc) return lvl;
+      }
+      return 1;
     }
-    return 1;
+
+    function calcRoundCoeff(levels) {
+      let sum = 0;
+      for (let i = 0; i < levels.length; i++) {
+        const l = levels[i];
+        if (!l || l === TILE_CRASH) continue;
+        if (l === TILE_BONUS) {
+          sum += BONUS_TILE_COEFF;
+        } else {
+          sum += COEFF_BY_LEVEL[l] || 0;
+        }
+      }
+      return sum;
+    }
+
+    function coeffGainLabelForMerge(levelL) {
+      if (!levelL || levelL <= 0 || levelL === TILE_CRASH || levelL === TILE_BONUS) return null;
+      const next = Math.min(levelL + 1, MAX_LEVEL);
+      const c0 = COEFF_BY_LEVEL[levelL] || 0;
+      const c1 = COEFF_BY_LEVEL[next] || 0;
+      const delta = c1 - 2 * c0;
+      const value = delta > 1e-10 ? delta : c1;
+      if (!(value > 0)) return null;
+      return value;
+    }
+
+    return {
+      id: config.id,
+      label: config.label,
+      MAX_LEVEL: MAX_LEVEL,
+      MIN_BET: MIN_BET,
+      TILE_CRASH: TILE_CRASH,
+      TILE_BONUS: TILE_BONUS,
+      CRASH_MULT: CRASH_MULT,
+      BONUS_TILE_COEFF: BONUS_TILE_COEFF,
+      COEFF_BY_LEVEL: COEFF_BY_LEVEL,
+      getCurrentStage: getCurrentStage,
+      pickTileForEmptyCell: pickTileForEmptyCell,
+      calcRoundCoeff: calcRoundCoeff,
+      coeffGainLabelForMerge: coeffGainLabelForMerge,
+    };
   }
+
+  const MATH3 = createMathProfile({
+    id: "math3",
+    label: "Math3",
+    c1: 0.02798,
+    g: 1.20661,
+    stageThresholds: [0.17750, 0.49775, 1.70775],
+    alphaStages: [0.70028, 0.18708, 0.73031, 0.13306],
+    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
+    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
+    computeBombProb: function (totalCoeff, roundNumber) {
+      const BOMB_P = 0.09128;
+      if (totalCoeff < 0.8) {
+        let prob = BOMB_P * 0.093;
+        if (roundNumber === 1) prob *= 0.1;
+        return prob;
+      }
+      return BOMB_P;
+    },
+    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
+      let prob = 0.00678;
+      if (roundNumber === 1) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 0.1;
+      return prob;
+    },
+  });
+
+  const MATH2 = createMathProfile({
+    id: "math2",
+    label: "Math2",
+    c1: 0.03633,
+    g: 1.15219,
+    stageThresholds: [0.16308, 0.52254],
+    alphaStages: [0.68339, 0.18043, 0.60533],
+    factorsBelowOne: { existing: 0.26814, new: 4.98947 },
+    factorsAboveOne: { existing: 0.44646, new: 3.14095 },
+    computeBombProb: function (totalCoeff) {
+      const BOMB_P = 0.07940;
+      if (totalCoeff < 1.0) return BOMB_P * 0.089;
+      return BOMB_P;
+    },
+    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
+      let prob = 0.00616;
+      if (roundNumber <= 2) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 0.1;
+      return prob;
+    },
+  });
 
   function applyGravityWithSpawnMask(levels, spawnMask) {
     const mask = spawnMask || new Array(9).fill(false);
@@ -189,20 +244,6 @@
 
   function applyGravity(levels) {
     return applyGravityWithSpawnMask(levels, null).grid;
-  }
-
-  function calcRoundCoeff(levels) {
-    let sum = 0;
-    for (let i = 0; i < levels.length; i++) {
-      const l = levels[i];
-      if (!l || l === TILE_CRASH) continue;
-      if (l === TILE_BONUS) {
-        sum += BONUS_TILE_COEFF;
-      } else {
-        sum += COEFF_BY_LEVEL[l] || 0;
-      }
-    }
-    return sum;
   }
 
   function hasAnyPair(levels) {
@@ -248,50 +289,47 @@
     return pairs;
   }
 
-  function coeffGainLabelForMerge(levelL) {
-    if (!levelL || levelL <= 0 || levelL === TILE_CRASH || levelL === TILE_BONUS) return null;
-    const next = Math.min(levelL + 1, MAX_LEVEL);
-    const c0 = COEFF_BY_LEVEL[levelL] || 0;
-    const c1 = COEFF_BY_LEVEL[next] || 0;
-    const delta = c1 - 2 * c0;
-    const value = delta > 1e-10 ? delta : c1;
-    if (!(value > 0)) return null;
-    return value;
-  }
-
   function mergeLevelsFromPairs(levels, pairs) {
     const arr = levels.slice();
     for (let p = 0; p < pairs.length; p++) {
       const pair = pairs[p];
       const anchorIdx = pair[0];
-      const moverIdx  = pair[1];
+      const moverIdx = pair[1];
       const l = arr[anchorIdx];
       if (!l || arr[moverIdx] !== l) continue;
       arr[anchorIdx] = Math.min(l + 1, MAX_LEVEL);
-      arr[moverIdx]  = 0;
+      arr[moverIdx] = 0;
     }
     return arr;
   }
 
-  global.MergeGameMath = {
-    MAX_LEVEL:               MAX_LEVEL,
-    MIN_BET:                 MIN_BET,
-    TILE_CRASH:              TILE_CRASH,
-    TILE_BONUS:              TILE_BONUS,
-    CRASH_MULT:              CRASH_MULT,
-    BONUS_TILE_COEFF:        BONUS_TILE_COEFF,
-    det01:                   det01,
-    COEFF_BY_LEVEL:          COEFF_BY_LEVEL,
-    mergeGlowRgbForLevel:    mergeGlowRgbForLevel,
-    getCurrentStage:         getCurrentStage,
-    pickTileForEmptyCell:    pickTileForEmptyCell,
-    applyGravityWithSpawnMask: applyGravityWithSpawnMask,
-    applyGravity:            applyGravity,
-    calcRoundCoeff:          calcRoundCoeff,
-    hasAnyPair:              hasAnyPair,
-    isGridFullNoPairs:       isGridFullNoPairs,
-    findPairs:               findPairs,
-    coeffGainLabelForMerge:  coeffGainLabelForMerge,
-    mergeLevelsFromPairs:    mergeLevelsFromPairs,
+  const profiles = {
+    math2: MATH2,
+    math3: MATH3,
   };
+
+  let activeProfileId = "math3";
+
+  function sharedApi() {
+    return {
+      det01: det01,
+      mergeGlowRgbForLevel: mergeGlowRgbForLevel,
+      applyGravityWithSpawnMask: applyGravityWithSpawnMask,
+      applyGravity: applyGravity,
+      hasAnyPair: hasAnyPair,
+      isGridFullNoPairs: isGridFullNoPairs,
+      findPairs: findPairs,
+      mergeLevelsFromPairs: mergeLevelsFromPairs,
+      profiles: profiles,
+      getActiveProfileId: function () { return activeProfileId; },
+      setActiveProfile: function (profileId) {
+        if (!profiles[profileId]) return false;
+        activeProfileId = profileId;
+        Object.assign(global.MergeGameMath, profiles[profileId], sharedApi());
+        return true;
+      },
+    };
+  }
+
+  global.MergeGameMath = Object.assign({}, MATH3, sharedApi());
 })(typeof window !== "undefined" ? window : globalThis);
