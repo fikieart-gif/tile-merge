@@ -1945,8 +1945,7 @@
     });
   }
 
-  // Обработка цепочки слияний: за один проход сливается только одна пара, затем рекурсия на новой сетке.
-  // coeffBaseBeforeMergeStep — totalCoeff до слияний этого шага; totalCoeff обновляется один раз в конце цепочки
+  // coeff += calcRoundCoeff(grid) за раунд (ТЗ): coeffBase — totalCoeff до слияний этого шага.
   function processMergeChain(
     levels,
     onDone,
@@ -3194,6 +3193,7 @@
     }
 
     roundIndex += 1;
+    const coeffBeforeRound = totalCoeff;
     isAnimating = true;
     updateUI();
 
@@ -3293,7 +3293,6 @@
     updateUI(spawnAfterFall);
 
     setTimeout(() => {
-      const coeffBaseBeforeMergeStep = totalCoeff;
       pendingMergeCoeffs = [];
       if (pendingMergeCoeffLayer) {
         pendingMergeCoeffLayer.replaceChildren();
@@ -3350,7 +3349,7 @@
         isAnimating = false;
         isStepLockedByBetStart = false;
         updateUI();
-      }, coeffBaseBeforeMergeStep);
+      }, coeffBeforeRound);
     }, 130);
   }
 

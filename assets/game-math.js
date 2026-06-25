@@ -115,6 +115,7 @@
     }
 
     function calcRoundCoeff(levels) {
+      /* Суммарный множитель = сумма вкладов всех тайлов на поле после шага. */
       let sum = 0;
       for (let i = 0; i < levels.length; i++) {
         const l = levels[i];
