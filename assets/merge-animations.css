@@ -1,0 +1,382 @@
+/**
+ * Анимации merge / тайлов / прогрева. Подключать с ?v= той же версии, что и TILE_ASSET_VERSION в index.html.
+ */
+
+/* --- Кэф: вспышка пересчёта --- */
+.coeff-value.coeff-value--recalc-flash {
+  animation: coeffRecalcFlash 60ms ease-out;
+}
+@keyframes coeffRecalcFlash {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+  22% {
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+}
+
+.coeff-fly-anchor {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 2px;
+  transform: translate(-50%, calc(-50% - 38px));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* --- Спавн / деспавн тайла --- */
+@keyframes tileSpawnPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes tileCrashSpawnFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.cell-face.cell-face--crash-spawn-fade {
+  opacity: 0;
+  animation: tileCrashSpawnFade 0.07s ease-out var(--spawn-delay, 0ms) both;
+}
+@keyframes tileDespawnPop {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes tileDespawnHalfOpacity {
+  0% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.cell-face.cell-face--spawn-in {
+  opacity: 0;
+  animation: tileSpawnPop 0.04s ease-out var(--spawn-delay, 0ms) both;
+}
+.cell-face.cell-face--despawn-out {
+  opacity: 1;
+  animation: tileDespawnPop 0.04s ease-in var(--despawn-delay, 0ms) both;
+}
+.cell-face.tile-asset.tile-fail-muted .tile-emblem,
+.cell-face.tile-asset.tile-fail-muted .tile-emblem-glow {
+  opacity: 0.5 !important;
+}
+.cell-face.tile-asset.cell-face--despawn-out .tile-emblem,
+.cell-face.tile-asset.cell-face--despawn-out .tile-emblem-glow {
+  transform: none;
+  animation: tileDespawnHalfOpacity 0.04s ease-in var(--despawn-delay, 0ms) both;
+}
+.cell-face.tile-asset.cell-face--spawn-in .tile-emblem {
+  animation: none;
+  transform: none;
+}
+.cell-face.tile-asset.cell-face--spawn-in .tile-emblem-glow {
+  animation: none;
+  opacity: 0;
+}
+
+/* --- Merge: ожидание + resolve --- */
+.cell-face.tile-asset.cell-face--merge-pending {
+  isolation: isolate;
+}
+.cell-face.tile-asset.cell-face--merge-pending .tile-emblem {
+  opacity: 1;
+  z-index: 2;
+}
+/* Плавное «загорание» до полёта (длительность ≈ MERGE_PENDING_HIGHLIGHT_MS в index.html). */
+@keyframes mergePendingGlowRamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.cell-face.tile-asset.cell-face--merge-pending .tile-emblem-glow {
+  z-index: 4;
+  transform-origin: center center;
+  transition: none;
+  animation: mergePendingGlowRamp 0.09s cubic-bezier(0.18, 0.82, 0.25, 1) forwards;
+}
+
+/* Цепочка: glow уже на полной яркости — пропустить ramp-анимацию.
+   Используется как cell-face--merge-pending модификатор при повторном участии тайла в merge. */
+.cell-face.tile-asset.cell-face--merge-pending.tile-glow-frozen .tile-emblem {
+  transform: none;
+  animation: none;
+}
+.cell-face.tile-asset.cell-face--merge-pending.tile-glow-frozen .tile-emblem-glow {
+  z-index: 4;
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+/* Без filter — на WebKit filter + transform на плашке даёт лишние слои и мерцание при смене PNG. */
+@keyframes mergeResolvePlate {
+  0% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.028);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* С 0% уже свечение — без «мигания» без glow перед анимацией (моб. WebKit). */
+@keyframes mergeResolveEmblemGlow {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  38% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+/* Для цепочки: тот же pop, но без гашения glow в финале. */
+@keyframes mergeResolveEmblemGlowKeep {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  38% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+/* Как у .cell-face--merge-pending: свечение поверх эмблемы. Иначе z-index 1 у .tile-emblem-glow
+   оставляет glow под эмблемой (z-index 2) — на моб. плотных PNG пульс mergeResolveEmblemGlow не виден. */
+.cell-face.tile-asset.tile-merge-resolve {
+  overflow: visible;
+  isolation: isolate;
+}
+.cell-face.tile-asset.tile-merge-resolve .tile-plate,
+.cell-face.tile-asset.tile-merge-resolve .tile-emblem,
+.cell-face.tile-asset.tile-merge-resolve .tile-emblem-glow {
+  transition: none;
+}
+.cell-face.tile-asset.tile-merge-resolve .tile-plate {
+  transform-origin: center center;
+}
+.cell-face.tile-asset.tile-merge-resolve .tile-emblem {
+  z-index: 2;
+  will-change: transform;
+  transform-origin: center center;
+}
+.cell-face.tile-asset.tile-merge-resolve .tile-emblem-glow {
+  z-index: 4;
+  animation: mergeResolveEmblemGlow 55ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center center;
+}
+.cell-face.tile-asset.tile-merge-resolve.tile-merge-resolve--keep-glow .tile-emblem-glow {
+  animation: mergeResolveEmblemGlowKeep 55ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* --- Краш / бонус / поле --- */
+@keyframes crashShake {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  20% {
+    transform: translate(-6px, 3px) scale(1.02);
+  }
+  40% {
+    transform: translate(5px, -3px) scale(1.03);
+  }
+  60% {
+    transform: translate(-4px, 2px) scale(1.02);
+  }
+  80% {
+    transform: translate(3px, -2px) scale(1.01);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes crashFlash {
+  0% {
+    box-shadow: 0 0 0 rgba(248, 113, 113, 0);
+  }
+  40% {
+    box-shadow: 0 0 40px rgba(248, 113, 113, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(248, 113, 113, 0);
+  }
+}
+.game.crash-flash {
+  animation: crashFlash 0.15s ease-out;
+}
+@keyframes gridFailVibrate3 {
+  0% {
+    transform: translate(0, 0);
+  }
+  16.66% {
+    transform: translate(-5px, 0);
+  }
+  33.33% {
+    transform: translate(5px, 0);
+  }
+  50% {
+    transform: translate(-4px, 0);
+  }
+  66.66% {
+    transform: translate(4px, 0);
+  }
+  83.33% {
+    transform: translate(-3px, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+.field-shell.field-shell--crash-vibrate {
+  box-shadow: 0 0 16px 0 rgba(239, 0, 11, 0.7);
+}
+
+@keyframes bonusFlash {
+  0% {
+    box-shadow: 0 0 0 rgba(251, 191, 36, 0);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+.bonus-flash {
+  animation: bonusFlash 0.2s ease-out;
+}
+
+/* --- +кэф бейджи / слой --- */
+.merge-coeff-pending-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483647;
+  overflow: visible;
+}
+.merge-coeff-pending-badge {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.cell-face.tile-asset.tile-final-glint::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(
+    108deg,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(255, 255, 255, 0.3) 48%,
+    rgba(255, 255, 255, 0) 62%
+  );
+  transform: translateX(-165%);
+  animation: tileFinalGlintSweep 85ms ease-out forwards;
+  mix-blend-mode: screen;
+}
+.cell-face.tile-asset.tile-final-glint {
+  overflow: hidden;
+}
+@keyframes tileFinalGlintSweep {
+  0% {
+    transform: translateX(-165%);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(165%);
+    opacity: 0;
+  }
+}
+
+/* --- Прогрев ассетов --- */
+.asset-precache-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  background: rgba(5, 8, 22, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #aeb8d9;
+  letter-spacing: -0.01em;
+  transition: opacity 0.32s ease;
+}
+.asset-precache-overlay.is-active {
+  display: flex;
+}
+.asset-precache-overlay.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+.asset-precache-overlay .asset-precache-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(235, 240, 255, 0.18);
+  border-top-color: rgba(120, 160, 255, 0.95);
+  animation: assetPrecacheSpin 0.75s linear infinite;
+}
+@keyframes assetPrecacheSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

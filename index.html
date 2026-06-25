@@ -1,0 +1,3407 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MergeMoney 5-Stage + Bonus Tile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Версия query — в синх с TILE_ASSET_VERSION в скрипте и с merge-flight.js ниже -->
+  <link rel="stylesheet" href="assets/merge-animations.css?v=71" />
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      background: #050816;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0;
+      padding: max(24px, env(safe-area-inset-top, 0px)) 16px 0;
+    }
+    .page-stack {
+      position: relative;
+      z-index: 2147483647;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 380px;
+      flex: 0 0 auto;
+      background: #131317;
+    }
+    .app-header {
+      flex-shrink: 0;
+      align-self: center;
+      width: 100%;
+      max-width: 380px;
+      height: 60px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 16px;
+      box-sizing: border-box;
+      background: #141415;
+      border-bottom: 1px solid #242431;
+      border-radius: 0;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #ebf0ff;
+    }
+    .app-header-logo {
+      grid-column: 2;
+      justify-self: center;
+      display: block;
+      height: 28px;
+      width: auto;
+      max-width: min(200px, 72vw);
+      object-fit: contain;
+      object-position: center;
+    }
+    .app-header-action {
+      grid-column: 3;
+      justify-self: end;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app-header-action:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
+    .app-header-action img {
+      display: block;
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+    .app-subheader {
+      flex-shrink: 0;
+      align-self: center;
+      width: 100%;
+      max-width: 380px;
+      height: 56px;
+      box-sizing: border-box;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      background-color: #131317;
+    }
+    .app-subheader-action {
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app-subheader-action:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+      border-radius: 10px;
+    }
+    .app-subheader-action img {
+      display: block;
+      height: 32px;
+      width: auto;
+      max-width: 40px;
+      object-fit: contain;
+    }
+    .app-subheader-balance {
+      margin-left: 8px;
+      min-width: 0;
+      flex: 1 1 auto;
+      text-align: left;
+      color: #dfdfea;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 32px;
+    }
+    .app-subheader-trailing {
+      margin-left: auto;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .app-footer {
+      position: relative;
+      z-index: 2147483646;
+      display: flex;
+      width: calc(100% + 32px);
+      max-width: none;
+      margin-left: -16px;
+      margin-right: -16px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 16px 16px 0 0;
+      background: #1a1a23;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      align-self: stretch;
+    }
+    .app-footer-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 14px 16px;
+      min-width: 0;
+      flex: 1 1 auto;
+      margin-left: auto;
+    }
+    .app-footer-stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .app-footer-stat-icon {
+      display: block;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: #94a3b8;
+    }
+    .app-footer-stat-icon img {
+      display: block;
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+    }
+    .app-footer-stat-title {
+      color: var(--fg-content-primary, #ebf0ff);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0.01px;
+    }
+    .app-footer-stat-value {
+      color: #71718a;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0.01px;
+      font-variant-numeric: tabular-nums;
+    }
+    .app-footer-logo {
+      display: block;
+      height: 16px;
+      width: auto;
+      max-width: min(120px, 38%);
+      flex-shrink: 0;
+      object-fit: contain;
+      object-position: left center;
+    }
+    .game {
+      /* Высота футера под оверлей листа ставки (padding 12×2 + ряд ~16px; при переносе строки поднять). */
+      --app-footer-clearance: 48px;
+      /* Зазор между кнопкой «СТАРТ» и верхом футера. */
+      --bet-sheet-footer-gap: 20px;
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      background: linear-gradient(180deg, #1a1a23 0%, #131317 100%);
+      padding: 4px 16px 0;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .field-shell {
+      position: relative;
+      display: flex;
+      height: auto;
+      padding: 4px;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      align-self: stretch;
+      border-radius: 20px;
+      background: #101014;
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      margin-top: -10px;
+      margin-bottom: 16px;
+      transition: box-shadow 0.07s ease-out;
+    }
+    .coeff-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      margin-left: -16px;
+      margin-right: -16px;
+      width: calc(100% + 32px);
+      min-height: 72px;
+      box-sizing: border-box;
+    }
+    .coeff-stake-block {
+      position: absolute;
+      left: 24px;
+      top: 50%;
+      transform: translateY(calc(-50% - 4px));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .coeff-stake-block.coeff-stake-block--inactive {
+      cursor: default;
+      opacity: 0.5;
+    }
+    .coeff-stake-title {
+      color: #71718a;
+      text-align: left;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter Variable", "Inter", system-ui, sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 200;
+      line-height: normal;
+    }
+    .coeff-stake-value {
+      color: #dfdfea;
+      text-align: left;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+      letter-spacing: var(--font-body-semibold-letter-spacing, 0);
+      font-variant-numeric: tabular-nums;
+      align-self: flex-start;
+    }
+    .coeff-win-block {
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(calc(-50% - 4px));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      pointer-events: none;
+    }
+    .coeff-win-title {
+      color: #71718a;
+      text-align: right;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter Variable", "Inter", system-ui, sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 200;
+      line-height: normal;
+    }
+    .coeff-win-value {
+      color: #24f49d;
+      text-align: right;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+      letter-spacing: var(--font-body-semibold-letter-spacing, 0);
+      font-variant-numeric: tabular-nums;
+      align-self: flex-end;
+    }
+    .coeff-display {
+      position: relative;
+      width: 178px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .coeff-vignette {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 178px;
+      height: 72px;
+      display: block;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .coeff-value {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      transform: translateY(-4px);
+      color: #ffffff;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-variant-numeric: lining-nums tabular-nums;
+      -webkit-text-stroke-width: 0.35px;
+      -webkit-text-stroke-color: rgba(255, 255, 255, 0.45);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 40px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 19.078px;
+      letter-spacing: var(--font-body-semibold-letter-spacing, 0);
+    }
+    .coeff-value.coeff-value--active {
+      color: #ffffff;
+      -webkit-text-stroke-width: 0.4px;
+      -webkit-text-stroke-color: rgba(255, 255, 255, 0.7);
+    }
+    .field-shell .grid {
+      margin: 0;
+      width: 100%;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    /* JS: syncGridCellPxSnapped() — целые px на колонку везде (без дробных 1fr). */
+    .grid.grid--snap-cells {
+      grid-template-columns: repeat(3, var(--grid-cell-px));
+      width: calc(var(--grid-cell-px) * 3 + 12px);
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
+    .cell {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      position: relative;
+      /* Фон «пустой» ячейки всегда под слоем .cell-face — не просвечивает сетка/field-shell при merge. */
+      background-color: #1a1a23;
+      isolation: isolate;
+      /* visible: плашка при merge не обрезается рамкой ячейки; карман режет только .cell-slot */
+      overflow: visible;
+    }
+    /* Неподвижный «карман» ячейки: остаётся на месте, пока .cell-face едет при merge */
+    .cell-slot {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: #1a1a23;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .cell-face {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      overflow: hidden;
+      background: #111827;
+      transition: background 0.05s ease-out;
+    }
+    .cell-level {
+      z-index: 1;
+    }
+    .cell-face.crash {
+      background-color: #210a10;
+      background-image: none;
+    }
+    .crash-plate,
+    .crash-emblem {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .crash-plate {
+      z-index: 0;
+    }
+    .crash-emblem {
+      z-index: 2;
+    }
+    .cell-face.bonus {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #451a03;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .row.row-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: stretch;
+      width: 100%;
+      min-width: 0;
+    }
+    .row.row-actions > button {
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+      min-height: 60px;
+      box-sizing: border-box;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.05s ease-out, box-shadow 0.05s ease-out, opacity 0.03s;
+      white-space: nowrap;
+    }
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    button.btn-step:active {
+      box-shadow: 0 -1.5px 1px 0 rgba(0, 2, 1, 0.6) inset, 0 1.5px 1px 0 #2fffa8 inset;
+    }
+    button.btn-cashout-secondary:active {
+      box-shadow:
+        0 -0.995px 0.995px 0 rgba(0, 0, 0, 0.4) inset,
+        0 0.995px 0.995px 0 rgba(119, 123, 150, 0.3) inset;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      width: 100%;
+    }
+    .btn-stack-label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn-stack-sub {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .btn-cashout-secondary {
+      display: flex;
+      flex-direction: column;
+      height: 60px;
+      padding: 20px 10px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      border-radius: 12px;
+      white-space: normal;
+      background: linear-gradient(180deg, #242633 0%, #1c1e28 100%);
+      box-shadow:
+        0 -0.995px 0.995px 0 rgba(0, 0, 0, 0.4) inset,
+        0 0.995px 0.995px 0 rgba(119, 123, 150, 0.3) inset;
+      color: #e2e8f0;
+    }
+    .btn-cashout-secondary .btn-stack {
+      gap: 5px;
+    }
+    .btn-cashout-secondary .btn-stack-label {
+      color: #fff;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 300;
+      line-height: 16px;
+      opacity: 0.5;
+    }
+    .btn-cashout-secondary .btn-stack-sub {
+      color: #24f49d;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 16px;
+      text-transform: uppercase;
+    }
+    .btn-cashout-secondary:disabled .btn-stack-sub {
+      opacity: 0.45;
+    }
+    .btn-step {
+      display: flex;
+      height: 60px;
+      padding: 20px 12px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #00d179 0%, #009959 100%);
+      box-shadow:
+        0 -1.5px 1px 0 rgba(0, 2, 1, 0.6) inset,
+        0 1.5px 1px 0 #2fffa8 inset;
+      color: #fff;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 20px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 20.389px;
+      text-transform: uppercase;
+    }
+
+    /* Тост «победа»: затемнение всей .game + графика по центру карточки */
+    .win-toast-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px;
+      box-sizing: border-box;
+      background: rgba(5, 8, 22, 0.88);
+      backdrop-filter: saturate(0.75) brightness(0.86);
+      -webkit-backdrop-filter: saturate(0.75) brightness(0.86);
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.07s ease;
+    }
+    .win-toast-backdrop.visible {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .win-toast-art {
+      display: block;
+      position: relative;
+      z-index: 1;
+      transform: translateY(100px) scale(1.5);
+      transform-origin: center center;
+      width: min(100%, 1120px);
+      height: auto;
+      max-height: min(92%, 1200px);
+      object-fit: contain;
+      filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.45));
+    }
+
+    /* Лист ставки внутри .game — поверх футера, обрезается overflow и скруглением карточки. */
+    .bet-sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 2147483646;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      box-sizing: border-box;
+      background: rgba(5, 8, 22, 0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.04s ease;
+    }
+    .bet-sheet-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .bet-sheet {
+      width: 100%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      min-width: 0;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      overflow: hidden;
+      border: 1px solid #242431;
+      background: linear-gradient(180deg, #1a1a23 0%, #131317 100%);
+      box-shadow: 0 -10px 34px 0 rgba(0, 0, 0, 0.25);
+      padding: 20px;
+      /* Футер перекрывается модалкой, поэтому его высота не участвует в нижнем отступе кнопки. */
+      padding-bottom: var(--bet-sheet-footer-gap, 20px);
+      transform: translateY(100%);
+      transition: transform 0.06s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .bet-sheet-backdrop.visible .bet-sheet {
+      transform: translateY(0);
+    }
+    .bet-sheet-title {
+      color: #dadae9;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 300;
+      line-height: 20px;
+      text-align: center;
+      margin: 0 0 16px;
+      padding: 0;
+    }
+    .bet-sheet-stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .bet-sheet-presets {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+      width: 100%;
+    }
+    .bet-sheet-field {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      align-self: stretch;
+      width: 100%;
+      min-height: 48px;
+      padding: 4px;
+      box-sizing: border-box;
+      border-radius: 16px;
+      background: #111114;
+    }
+    .bet-sheet-field:focus-within {
+      box-shadow: inset 0 0 0 1px rgba(36, 244, 157, 0.45);
+    }
+    .bet-sheet-field button,
+    .bet-sheet-presets button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 12px;
+      color: #a6a6b8;
+      background: linear-gradient(180deg, #242633 0%, #1c1e28 100%);
+      box-shadow:
+        0 -0.995px 0.995px 0 rgba(0, 0, 0, 0.4) inset,
+        0 0.995px 0.995px 0 rgba(119, 123, 150, 0.25) inset;
+    }
+    .bet-sheet-field button {
+      flex: 0 0 40px;
+      width: 40px;
+    }
+    .bet-sheet-presets button {
+      flex: 1 1 0;
+      min-width: 0;
+      width: auto;
+      color: #a6a6b8;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 16px;
+      letter-spacing: -0.47px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .bet-sheet-field button svg {
+      display: block;
+      flex-shrink: 0;
+    }
+    .bet-sheet-field input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      text-align: center;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: #f8fafc;
+      box-sizing: border-box;
+      padding: 4px 2px;
+    }
+    .bet-sheet-field input:focus {
+      outline: none;
+    }
+    .bet-sheet-confirm {
+      width: 100%;
+      min-height: 52px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      /* Глобальное `button { padding: 10px 16px }` иначе добавляет +16px слева/справа к тексту поверх padding листа */
+      padding: 16px 0;
+      background: linear-gradient(180deg, #00d179 0%, #009959 100%);
+      box-shadow:
+        0 -1.5px 1px 0 rgba(0, 2, 1, 0.55) inset,
+        0 1.5px 1px 0 #2fffa8 inset;
+    }
+
+    /* Numbered tiles: plate + emblem + glow — один режим cover (без 100%×100% на дробных px ячейки, меньше артефактов на моб. WebKit). */
+    .cell-face.tile-asset {
+      background-color: #111827;
+      background-image: none;
+    }
+    .tile-plate,
+    .tile-plate-fail-crossfade,
+    .tile-emblem,
+    .tile-emblem-glow {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .tile-plate {
+      z-index: 0;
+    }
+    .tile-plate-fail-crossfade {
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+    }
+    .tile-emblem-glow {
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.06s ease-in-out;
+    }
+    .cell-face.tile-asset.tile-emblem-glow-active .tile-emblem {
+      opacity: 0;
+    }
+    .cell-face.tile-asset.tile-emblem-glow-active .tile-emblem-glow {
+      opacity: 1;
+    }
+    .tile-emblem {
+      z-index: 2;
+      opacity: 1;
+      transition: opacity 0.04s ease-in-out;
+    }
+    .tile-emblem.tile-emblem--hidden {
+      display: none;
+    }
+    .cell-face.tile-asset .cell-level {
+      display: none;
+    }
+    .crash-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2147483647;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(1.05);
+      /* Длительность появления/исчезновения = CRASH_BADGE_REVEAL_MS в скрипте (65 ms). */
+      transition:
+        opacity 0.065s ease-out,
+        transform 0.065s ease-out;
+    }
+    .crash-badge {
+      display: inline-flex;
+      padding: 35px 20px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      border-radius: 12px;
+      border: 1px solid #ff4a49;
+      background: rgba(33, 10, 16, 0.9);
+    }
+    .crash-badge-title-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .crash-title {
+      color: #ff4a49;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 32px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 0;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .crash-overlay.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .no-pairs-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2147483647;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 0.03s ease-out, transform 0.03s ease-out;
+    }
+    .no-pairs-badge {
+      display: inline-flex;
+      padding: 35px 20px;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(169, 180, 202, 0.73);
+      background:
+        linear-gradient(90deg, rgba(156, 166, 187, 0.1) 0%, rgba(156, 166, 187, 0.1) 100%),
+        #121218;
+    }
+    .no-pairs-badge-subtitle {
+      margin-top: 20px;
+      color: #fff;
+      text-align: center;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 20px;
+      letter-spacing: 0.14px;
+      opacity: 0.5;
+    }
+    .no-pairs-badge-title-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .no-pairs-badge .no-pairs-title {
+      color: #9ca6bb;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-variant-numeric: lining-nums tabular-nums;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 32px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 0;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .no-pairs-toast-overlay {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      /* Поверх .bet-sheet-backdrop и остальных слоёв .game */
+      z-index: 2147483647;
+      pointer-events: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      opacity: 0;
+      transform: none;
+      transition:
+        opacity 0.24s ease-out,
+        transform 0.24s cubic-bezier(0.22, 0.9, 0.3, 1);
+    }
+    .no-pairs-toast-overlay.no-pairs-toast-overlay--enter {
+      transition: opacity 0.04s ease-out !important;
+      transform: none !important;
+    }
+    .no-pairs-toast-overlay.no-pairs-toast-overlay--exit {
+      opacity: 0 !important;
+      transform: translateY(-12px) !important;
+      transition:
+        opacity 0.24s ease-out,
+        transform 0.24s cubic-bezier(0.22, 0.9, 0.3, 1) !important;
+    }
+    .no-pairs-toast {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      border: 1.2px solid #00b875;
+      border-radius: 16px;
+      box-shadow: 0 2px 15px 0 rgba(10, 10, 14, 0.8);
+      background:
+        linear-gradient(180deg, rgba(0, 184, 117, 0.2) 0%, rgba(0, 184, 117, 0) 100%),
+        #1a1a23;
+    }
+    .no-pairs-toast-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      padding: 12px 24px;
+      overflow: hidden;
+      border-radius: inherit;
+    }
+    .no-pairs-toast .no-pairs-title {
+      color: #ffffff;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 22px;
+      letter-spacing: -0.12px;
+    }
+    .no-pairs-toast .no-pairs-subtitle {
+      color: #fff;
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 300;
+      line-height: 20px;
+      letter-spacing: 0.14px;
+      text-transform: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      opacity: 1;
+    }
+    .no-pairs-toast .no-pairs-subtitle-muted {
+      opacity: 0.5;
+    }
+    .no-pairs-toast .no-pairs-subtitle-amount {
+      color: #00ffa2;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 19.078px;
+      letter-spacing: var(--font-body-semibold-letter-spacing, 0);
+      opacity: 1;
+    }
+    .no-pairs-overlay.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .no-pairs-toast-overlay.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Телефоны: нормальный масштаб (viewport) + ширина на весь экран, safe-area для «чёлки».
+       Порог ширины = MOBILE_TILES_MAX_WIDTH_PX в скрипте (отдельные тайлы в assets/tiles/mobile/). */
+    @media (max-width: 480px) {
+      body {
+        padding: max(12px, env(safe-area-inset-top, 0px)) 0 0;
+        align-items: stretch;
+      }
+      .page-stack {
+        max-width: none;
+        width: 100%;
+      }
+      .app-header {
+        max-width: none;
+        align-self: stretch;
+        border-radius: 0;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .app-subheader {
+        max-width: none;
+        align-self: stretch;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .game {
+        max-width: none;
+        width: 100%;
+        align-self: stretch;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+      .app-footer {
+        width: 100%;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    /* Итог кэшаута (кэф ≥ 2): затемнение всей карточки .game (кэф, поле, кнопки, футер игры). */
+    .cashout-celebration-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 20px 16px;
+      border-radius: 24px 24px 0 0;
+      background: rgba(14, 14, 18, 0.96);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.06s ease, visibility 0.06s ease;
+    }
+    .cashout-celebration-overlay.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .cashout-celebration-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0;
+      max-width: min(340px, 92vw);
+      font-family: "Inter", system-ui, sans-serif;
+    }
+    .cashout-celebration-kicker {
+      margin: 0;
+      color: #fff;
+      text-align: center;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 20px;
+      opacity: 0.7;
+    }
+    .cashout-celebration-amount {
+      margin: 16px 0 0;
+      text-shadow:
+        0 0 13.075px rgba(220, 106, 0, 0.5),
+        0 0 2.058px rgba(255, 223, 146, 0.4);
+      -webkit-text-stroke-width: 0.33px;
+      -webkit-text-stroke-color: #000;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 32px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: normal;
+      letter-spacing: 1.6px;
+      background: linear-gradient(209deg, #ffd962 22.27%, #ffa73f 83.4%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .cashout-celebration-coeff {
+      margin: 20px 0 0;
+      display: inline-flex;
+      padding: 10px 16px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      border-radius: 8px;
+      border: 1px solid #38f2b1;
+      background: #1a4b40;
+      box-sizing: border-box;
+      color: #38f2b1;
+      text-align: center;
+      leading-trim: both;
+      text-edge: cap;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: var(--font-body-semibold-line-height, 20px);
+      letter-spacing: var(--font-body-semibold-letter-spacing, 0);
+    }
+  </style>
+</head>
+<body>
+<div
+  id="assetPrecacheOverlay"
+  class="asset-precache-overlay"
+  role="status"
+  aria-live="polite"
+  aria-hidden="true"
+>
+  <div class="asset-precache-spinner" aria-hidden="true"></div>
+  <p class="asset-precache-label" style="margin: 0; text-align: center">Загрузка ресурсов…</p>
+</div>
+<div class="page-stack">
+<header class="app-header" role="banner">
+    <img
+      class="app-header-logo"
+      src="assets/brand_logo.svg"
+      width="61"
+      height="28"
+      alt="MergeMoney"
+      decoding="async"
+    />
+    <button type="button" class="app-header-action" aria-label="Обмен">
+      <img src="assets/header-button.svg" width="32" height="32" alt="" decoding="async" />
+    </button>
+  </header>
+  <div class="app-subheader" role="region" aria-label="Дополнительная панель">
+    <button type="button" class="app-subheader-action" aria-label="Кошелёк">
+      <img src="assets/subheader-button.svg" width="32" height="32" alt="" decoding="async" />
+    </button>
+    <span class="app-subheader-balance" id="subheaderBalance" aria-live="polite" aria-label="Баланс"></span>
+    <div class="app-subheader-trailing" role="group" aria-label="Действия">
+      <button type="button" class="app-subheader-action" aria-label="Звук">
+        <img src="assets/subheader-sound.svg" width="32" height="32" alt="" decoding="async" />
+      </button>
+      <button type="button" class="app-subheader-action" aria-label="Справка">
+        <img src="assets/subheader-info.svg" width="34" height="32" alt="" decoding="async" />
+      </button>
+      <button type="button" class="app-subheader-action" aria-label="Настройки">
+        <img src="assets/subheader-settings.svg" width="32" height="32" alt="" decoding="async" />
+      </button>
+    </div>
+  </div>
+<div class="game" id="gameRoot">
+  <div class="no-pairs-toast-overlay" id="noPairsToastOverlay">
+    <div class="no-pairs-toast">
+      <div class="no-pairs-toast-content">
+        <div class="no-pairs-title" id="noPairsToastTitle">Нет пар!</div>
+          <div class="no-pairs-subtitle">
+            <span class="no-pairs-subtitle-muted">Начислено</span>
+            <span class="no-pairs-subtitle-amount" id="noPairsToastAmount">$0.00</span>
+            <span class="no-pairs-subtitle-muted">на ваш счет</span>
+          </div>
+      </div>
+    </div>
+  </div>
+  <div class="coeff-wrapper">
+    <div
+      class="coeff-stake-block"
+      id="coeffStakeBlock"
+      role="button"
+      tabindex="0"
+      aria-label="Ставка сессии, нажмите чтобы изменить сумму"
+    >
+      <span class="coeff-stake-title">Ставка</span>
+      <span class="coeff-stake-value" id="coeffStakeAmount">...</span>
+    </div>
+    <div class="coeff-display">
+      <svg class="coeff-vignette" xmlns="http://www.w3.org/2000/svg" width="178" height="72" viewBox="0 0 178 72" fill="none" aria-hidden="true">
+        <path d="M12.4267 8.09131C13.3404 3.39239 17.4559 0 22.2428 0H155.757C160.544 0 164.66 3.39239 165.573 8.0913L178 72H0L12.4267 8.09131Z" fill="url(#paint0_linear_264_1439)" fill-opacity="0.8" style="mix-blend-mode:screen"/>
+        <defs>
+          <linearGradient id="paint0_linear_264_1439" x1="89" y1="0" x2="89" y2="60.5769" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#101014"/>
+            <stop offset="1" stop-color="#101014" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="coeff-fly-anchor" id="coeffFlyAnchor" aria-hidden="true"></span>
+      <div class="coeff-value" id="coeffText">x0.00</div>
+    </div>
+    <div class="coeff-win-block" aria-label="Номер хода в сессии">
+      <span class="coeff-win-title">Ход</span>
+      <span class="coeff-win-value" id="coeffWinAmount">...</span>
+    </div>
+  </div>
+
+  <div class="field-shell">
+    <div class="grid" id="grid"></div>
+    <div class="crash-overlay" id="crashOverlay">
+      <div class="crash-badge">
+        <div class="crash-badge-title-wrap">
+          <div class="crash-title">CRASH</div>
+        </div>
+      </div>
+    </div>
+    <div class="no-pairs-overlay" id="noPairsOverlay">
+
+      <div class="no-pairs-badge">
+        <div class="no-pairs-badge-title-wrap">
+          <div class="no-pairs-title">НЕТ ПАР</div>
+        </div>
+        <div class="no-pairs-badge-subtitle">Закончились слоты<br>и одинаковые символы</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="row row-actions">
+      <button type="button" class="btn-cashout-secondary" id="cashoutButton" disabled>
+        <span class="btn-stack">
+          <span class="btn-stack-label">Вывести</span>
+          <span class="btn-stack-sub" id="cashoutProfitText">—</span>
+        </span>
+      </button>
+      <button type="button" class="btn-step" id="stepButton">GO</button>
+    </div>
+  </div>
+
+  <footer class="app-footer" role="contentinfo" aria-label="Нижняя панель">
+      <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
+      <div class="app-footer-stats">
+        <div class="app-footer-stat" title="Ставки">
+          <span class="app-footer-stat-icon" aria-hidden="true">
+            <img src="assets/footer-bets.svg" width="16" height="16" alt="" decoding="async" />
+          </span>
+          <span class="app-footer-stat-value" id="footerBetsCount">999</span>
+        </div>
+        <div class="app-footer-stat" title="Игроки онлайн">
+          <span class="app-footer-stat-icon" aria-hidden="true">
+            <img src="assets/footer-users.svg" width="16" height="16" alt="" decoding="async" />
+          </span>
+          <span class="app-footer-stat-value" id="footerPlayersCount">999</span>
+        </div>
+        <div class="app-footer-stat">
+          <span class="app-footer-stat-title">RTP</span>
+          <span class="app-footer-stat-value" id="footerRtpValue">97%</span>
+        </div>
+      </div>
+    </footer>
+
+  <!-- Лист «Сумма ставки» (первый заход) -->
+  <div class="bet-sheet-backdrop" id="betSheetBackdrop" aria-hidden="true">
+    <div class="bet-sheet" id="betSheetPanel" role="dialog" aria-labelledby="betSheetTitle" aria-modal="true">
+      <h2 class="bet-sheet-title" id="betSheetTitle">Сумма ставки</h2>
+      <div class="bet-sheet-stepper">
+        <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
+          <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M8.89961 7.09961H7.09961H1.99961C1.50255 7.09961 1.09961 7.50255 1.09961 7.99961C1.09961 8.49667 1.50255 8.89961 1.99961 8.89961H7.09961H8.89961H13.9996C14.4967 8.89961 14.8996 8.49667 14.8996 7.99961C14.8996 7.50255 14.4967 7.09961 13.9996 7.09961H8.89961Z" fill="currentColor" />
+            </svg>
+          </button>
+          <input type="text" inputmode="numeric" id="betSheetInput" value="10" maxlength="6" autocomplete="off" aria-label="Сумма ставки" />
+          <button type="button" id="betSheetPlus" aria-label="Увеличить ставку">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M7.99961 1.09961C8.49667 1.09961 8.89961 1.50255 8.89961 1.99961V7.09961H13.9996C14.4967 7.09961 14.8996 7.50255 14.8996 7.99961C14.8996 8.49667 14.4967 8.89961 13.9996 8.89961H8.89961V13.9996C8.89961 14.4967 8.49667 14.8996 7.99961 14.8996C7.50255 14.8996 7.09961 14.4967 7.09961 13.9996V8.89961H1.99961C1.50255 8.89961 1.09961 8.49667 1.09961 7.99961C1.09961 7.50255 1.50255 7.09961 1.99961 7.09961H7.09961V1.99961C7.09961 1.50255 7.50255 1.09961 7.99961 1.09961Z" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
+        <div class="bet-sheet-presets" role="group" aria-label="Быстрый выбор суммы ставки">
+          <button type="button" id="betSheetPresetMin" aria-label="Минимальная ставка">MIN</button>
+          <button type="button" id="betSheetPresetHalf" aria-label="Половина текущей ставки">1/2</button>
+          <button type="button" id="betSheetPresetDouble" aria-label="Удвоить ставку">Х2</button>
+          <button type="button" id="betSheetPresetMax" aria-label="Максимальная ставка">MAX</button>
+        </div>
+      </div>
+      <button type="button" class="bet-sheet-confirm" id="betSheetConfirm">СТАРТ</button>
+    </div>
+  </div>
+
+  <div
+    class="win-toast-backdrop"
+    id="winToastBackdrop"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+    aria-hidden="true"
+  >
+    <img
+      class="win-toast-art"
+      src="assets/win-toast.png"
+      width="1200"
+      height="1200"
+      alt=""
+      decoding="async"
+    />
+  </div>
+  <div
+    id="cashoutCelebrationOverlay"
+    class="cashout-celebration-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="cashoutCelebrationTitle"
+  >
+    <div class="cashout-celebration-card">
+      <p class="cashout-celebration-kicker" id="cashoutCelebrationTitle">Ваш выигрыш!</p>
+      <p class="cashout-celebration-amount" id="cashoutCelebrationAmount">$0.00</p>
+      <span class="cashout-celebration-coeff" id="cashoutCelebrationCoeff" aria-label="Итоговый множитель">x0.00</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="assets/game-math.js"></script>
+<script src="assets/js/merge-flight.js?v=71"></script>
+<script>
+  const {
+    MAX_LEVEL,
+    MIN_BET,
+    TILE_CRASH,
+    TILE_BONUS,
+    BONUS_TILE_COEFF,
+    COEFF_BY_LEVEL,
+    getCurrentStage,
+    pickTileForEmptyCell,
+    applyGravityWithSpawnMask,
+    calcRoundCoeff,
+    isGridFullNoPairs,
+    findPairs,
+    coeffGainLabelForMerge,
+    mergeLevelsFromPairs,
+  } = window.MergeGameMath;
+
+  /** После подтверждения листа в UI ставки/выигрыша показываются суммы вместо «...» (localStorage). */
+  const BET_SHEET_STORAGE_KEY = "mergeMvpBetSheetSeen";
+  /** Базовая ставка сессии; задаётся стартовым листом или по умолчанию 10. */
+  let baseBetAmount = 10;
+  /**
+   * Версия для query тайлов и бандла анимаций. При изменении поднимите также в head:
+   * link merge-animations.css?v=… и script merge-flight.js?v=…
+   */
+  const TILE_ASSET_VERSION = "73";
+  /**
+   * Узкий экран: те же имена файлов в assets/tiles/mobile/ (см. @media max-width ниже в <style>).
+   */
+  const MOBILE_TILES_MAX_WIDTH_PX = 480;
+  /**
+   * sessionStorage: по одному разу на вкладку — полный прогрев (decode + кеш) до старта UI.
+   * Иначе при совпадении localStorage оверлей снимали, а сеть/декод ещё не закончились.
+   */
+  const SESSION_ASSETS_WARM_KEY = "mergeMvpSessionAssetsWarmVer";
+
+  /** Длительность появления бейджа CRASH и кроссфейда fail-плашек на остальных тайлах при краше (см. .crash-overlay, .tile-plate-fail-crossfade). */
+  const CRASH_BADGE_REVEAL_MS = 65;
+  /** Кэшаут с множителем ≥ этого значения — полноэкранный экран «Ваш выигрыш!». */
+  const CASHOUT_CELEBRATION_MIN_COEFF = 2;
+  const CASHOUT_CELEBRATION_DISPLAY_MS = 465;
+
+  /* --- Тайминги анимаций ---
+   * ANIMATION_SETTLE_BUFFER_MS должен совпадать с duration анимаций tile-merge-resolve в merge-animations.css.
+   * При изменении CSS — обновлять MERGE_RESOLVE_MS и обратно. */
+  const ANIMATION_SETTLE_BUFFER_MS = 7;    // буфер после окончания animation (rAF settle)
+  const MERGE_SPAWN_POP_MS = 40;            // длительность tileSpawnPop
+  const MERGE_SPAWN_SETTLE_BUFFER_MS = 7;   // запас после spawn до merge-pending
+  const MERGE_PENDING_HIGHLIGHT_MS = 50;    // glow до полёта
+  const MERGE_RESOLVE_MS = 55;              // длительность tile-merge-resolve animation (= CSS)
+  const MERGE_CHAIN_GAP_AFTER_PATCH_MS = 30; // gap до следующего processMergeChain
+
+  /* --- Тайминги "Нет пар" --- */
+  const NO_PAIRS_BADGE_SHOW_DELAY_MS = 130;
+  const NO_PAIRS_DIMM_AHEAD_MS = 55;   // затемнение карточек раньше бейджа
+  const NO_PAIRS_BADGE_VISIBLE_MS = 250;
+  const NO_PAIRS_TOAST_AFTER_BADGE_MS = 85;
+  const NO_PAIRS_TOAST_DISMISS_AFTER_BET_SHEET_MS = 85;
+  const NO_PAIRS_EMBLEMS_DESPAWN_AFTER_BADGE_HIDE_MS = 15;
+  const GRID_FAIL_TO_MODAL_DELAY_MS = 25;
+
+  /* ─── FLICKER DEBUG ──────────────────────────────────────────────────────
+   * Включить: localStorage.setItem("flicker_debug","1") → обновить страницу.
+   * Выключить: localStorage.removeItem("flicker_debug") → обновить страницу.
+   * ─────────────────────────────────────────────────────────────────────── */
+  const FLICKER_DEBUG = (function () {
+    try { return localStorage.getItem("flicker_debug") === "1"; } catch (e) { return false; }
+  })();
+  const fdbg = (function () {
+    if (!FLICKER_DEBUG) return { log: function () {}, warn: function () {} };
+    const t0 = performance.now();
+    function ts() { return (performance.now() - t0).toFixed(1) + "ms"; }
+    return {
+      log:  function (tag, msg, d) { d !== undefined ? console.log ("[" + ts() + "][" + tag + "] " + msg, d) : console.log ("[" + ts() + "][" + tag + "] " + msg); },
+      warn: function (tag, msg, d) { d !== undefined ? console.warn("[" + ts() + "][" + tag + "] " + msg, d) : console.warn("[" + ts() + "][" + tag + "] " + msg); },
+    };
+  })();
+
+  /* Монитор потери фокуса/фона — WebKit evict-ит GPU-текстуры когда вкладка скрыта. */
+  (function () {
+    if (!FLICKER_DEBUG) return;
+    let hiddenAt = 0;
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = performance.now();
+        fdbg.warn("VIS", "tab hidden — GPU textures will be evicted by WebKit");
+      } else {
+        const ms = hiddenAt ? (performance.now() - hiddenAt).toFixed(0) : "?";
+        fdbg.warn("VIS", "tab visible again after " + ms + "ms — expect texture re-upload on next merge/spawn");
+      }
+    });
+  })();
+
+  function tileAssetUrl(relPath) {
+    return relPath + "?v=" + encodeURIComponent(TILE_ASSET_VERSION);
+  }
+
+  function useMobileTileAssets() {
+    try {
+      return window.matchMedia(
+        "(max-width: " + MOBILE_TILES_MAX_WIDTH_PX + "px)"
+      ).matches;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** При узком экране — assets/tiles/mobile/<тот же путь после tiles/> */
+  function tileAssetUrlForTiles(relPath) {
+    if (!relPath || typeof relPath !== "string") {
+      return tileAssetUrl(relPath);
+    }
+    if (!useMobileTileAssets()) {
+      return tileAssetUrl(relPath);
+    }
+    const prefix = "assets/tiles/";
+    if (relPath.indexOf(prefix) !== 0) {
+      return tileAssetUrl(relPath);
+    }
+    const rest = relPath.slice(prefix.length);
+    if (rest.indexOf("mobile/") === 0) {
+      return tileAssetUrl(relPath);
+    }
+    return tileAssetUrl(prefix + "mobile/" + rest);
+  }
+
+  function tileBgUrlFromRel(relPath) {
+    return "url('" + tileAssetUrlForTiles(relPath) + "')";
+  }
+
+  /**
+   * Кэш decode по финальному URL — повторные merge того же уровня не создают новые Image.
+   * Хранит { promise, img } — img удерживает декодированный bitmap в браузерном кеше,
+   * предотвращая GC. Без явного хранения img WebKit evict-ит декодированные данные
+   * после сборки мусора, и следующий CSS background-image render видит пустой первый кадр.
+   */
+  const tileImageDecodeByUrl = new Map();
+
+  function preloadTileUrlDecoded(absUrl) {
+    const cached = tileImageDecodeByUrl.get(absUrl);
+    if (cached) {
+      if (FLICKER_DEBUG) {
+        const name = absUrl.split("?")[0].split("/").pop();
+        const alive = cached.img && cached.img.naturalWidth > 0;
+        if (!alive) {
+          fdbg.warn("DECODE", "CACHE HIT but img NOT decoded (naturalWidth=0) — " + name + " — texture likely evicted");
+        }
+      }
+      return cached.promise;
+    }
+    if (FLICKER_DEBUG) {
+      fdbg.log("DECODE", "cache MISS — new Image() + decode for: " + absUrl.split("?")[0].split("/").pop());
+    }
+    const img = new Image();
+    const p = new Promise(function (resolve) {
+      img.onload = function () {
+        try {
+          if (typeof img.decode === "function") {
+            img.decode().then(resolve).catch(resolve);
+          } else {
+            resolve();
+          }
+        } catch (e) {
+          resolve();
+        }
+      };
+      img.onerror = resolve;
+      img.src = absUrl;
+    });
+    tileImageDecodeByUrl.set(absUrl, { promise: p, img: img });
+    return p;
+  }
+
+  /**
+   * Те же URL, что получит якорь после patch. Image.decode() до вставки DOM — иначе на моб. WebKit
+   * первый кадр с новым background-image часто пустой (мерцание смены эмблемы); на десктопе реже.
+   */
+  function preloadMergedAnchorFaceUrls(level) {
+    if (level === 0 || level == null) {
+      return Promise.resolve();
+    }
+    const rels = [];
+    if (level === TILE_CRASH) {
+      rels.push(
+        "assets/tiles/tile-crash-plate.png",
+        "assets/tiles/tile-crash-emblem.png"
+      );
+    } else if (level === TILE_BONUS) {
+      rels.push(
+        "assets/tiles/tile-bonus-plate.png",
+        "assets/tiles/tile-bonus-emblem.png"
+      );
+    } else {
+      rels.push(
+        "assets/tiles/tile-" + level + "-plate.png",
+        "assets/tiles/tile-" + level + "-emblem.png",
+        "assets/tiles/tile-" + level + "-emblem-glow.png"
+      );
+    }
+    if (FLICKER_DEBUG) {
+      rels.forEach(function (rel) {
+        const url = tileAssetUrlForTiles(rel);
+        const entry = tileImageDecodeByUrl.get(url);
+        const hit = !!entry;
+        const alive = hit && entry.img && entry.img.naturalWidth > 0;
+        const name = rel.split("/").pop();
+        if (!hit) {
+          fdbg.warn("PRELOAD", "MISS for " + name + " — first time decode, level=" + level);
+        } else if (!alive) {
+          fdbg.warn("PRELOAD", "HIT but img DEAD (naturalWidth=0) for " + name + " — level=" + level + " — GC or eviction!");
+        }
+      });
+    }
+    return Promise.all(
+      rels.map(function (rel) {
+        return preloadTileUrlDecoded(tileAssetUrlForTiles(rel));
+      })
+    );
+  }
+
+  function pushTileAssetBothLayouts(urls, relPath) {
+    urls.push(tileAssetUrl(relPath));
+    const prefix = "assets/tiles/";
+    if (relPath.indexOf(prefix) === 0) {
+      urls.push(
+        tileAssetUrl(prefix + "mobile/" + relPath.slice(prefix.length))
+      );
+    }
+  }
+
+  function getGameAssetUrlsToWarm() {
+    const urls = [
+      "assets/brand_logo.svg",
+      "assets/header-button.svg",
+      "assets/subheader-button.svg",
+      "assets/subheader-sound.svg",
+      "assets/subheader-info.svg",
+      "assets/subheader-settings.svg",
+      "assets/logoframe.svg",
+      "assets/footer-bets.svg",
+      "assets/footer-users.svg",
+      "assets/win-toast.png",
+    ];
+    pushTileAssetBothLayouts(urls, "assets/tiles/tile-fail-plate.png");
+    pushTileAssetBothLayouts(urls, "assets/tiles/tile-crash-plate.png");
+    pushTileAssetBothLayouts(urls, "assets/tiles/tile-crash-emblem.png");
+    pushTileAssetBothLayouts(urls, "assets/tiles/tile-bonus-plate.png");
+    pushTileAssetBothLayouts(urls, "assets/tiles/tile-bonus-emblem.png");
+    urls.push(tileAssetUrl("assets/merge-animations.css"));
+    urls.push(tileAssetUrl("assets/js/merge-flight.js"));
+    for (let lv = 1; lv <= 12; lv++) {
+      pushTileAssetBothLayouts(urls, "assets/tiles/tile-" + lv + "-plate.png");
+      pushTileAssetBothLayouts(urls, "assets/tiles/tile-" + lv + "-emblem.png");
+      pushTileAssetBothLayouts(urls, "assets/tiles/tile-" + lv + "-emblem-glow.png");
+    }
+    return urls;
+  }
+
+  function warmOneAssetUrl(url) {
+    const pathOnly = url.split("?")[0].toLowerCase();
+    const rasterOrSvg =
+      pathOnly.endsWith(".png") ||
+      pathOnly.endsWith(".svg") ||
+      pathOnly.endsWith(".jpg") ||
+      pathOnly.endsWith(".jpeg") ||
+      pathOnly.endsWith(".webp") ||
+      pathOnly.endsWith(".gif");
+    if (rasterOrSvg) {
+      return preloadTileUrlDecoded(url);
+    }
+    return fetch(url, { mode: "same-origin", cache: "default" })
+      .then(function () {})
+      .catch(function () {});
+  }
+
+  function precacheMergeGameAssets() {
+    const urls = getGameAssetUrlsToWarm();
+    return Promise.all(urls.map(warmOneAssetUrl));
+  }
+
+  /**
+   * После Image.decode() браузер гарантирует декод bitmap, но не загрузку в GPU
+   * для CSS background-image. На мобильном WebKit GPU-upload происходит только при
+   * реальном рендере через CSS pipeline. Без этого на refresh первый кадр merge пустой.
+   *
+   * Создаём скрытые div-элементы с background-image для каждого PNG-ассета,
+   * выдерживаем два rAF (браузер успевает растеризовать и залить на GPU),
+   * затем убираем элементы (img-объекты в Map удерживают кеш от GC).
+   */
+  function forceGpuTextureUpload() {
+    const urls = getGameAssetUrlsToWarm().filter(function (url) {
+      return /\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(url);
+    });
+    if (!urls.length) return Promise.resolve();
+    fdbg.log("GPU", "forceGpuTextureUpload start — " + urls.length + " PNG assets");
+    const gpuT = performance.now();
+    return new Promise(function (resolve) {
+      const host = document.createElement("div");
+      host.id = "flicker-gpu-host";
+      host.setAttribute("aria-hidden", "true");
+      host.style.cssText =
+        "position:fixed;left:-9999px;top:-9999px;" +
+        "width:1px;height:1px;overflow:hidden;" +
+        "pointer-events:none;will-change:transform;opacity:0.001;";
+      urls.forEach(function (url) {
+        const d = document.createElement("div");
+        d.style.cssText =
+          "width:1px;height:1px;" +
+          "background:url('" + url + "') no-repeat center/cover;";
+        host.appendChild(d);
+      });
+      document.body.appendChild(host);
+      /* НЕ удаляем host — пока элемент в DOM с will-change:transform,
+         GPU-слой и все текстуры остаются resident в compositor.
+         Удаление host освобождает текстуры, что отменяет весь смысл preload. */
+      requestAnimationFrame(function () {
+        fdbg.log("GPU", "rAF1: " + (performance.now() - gpuT).toFixed(1) + "ms");
+        requestAnimationFrame(function () {
+          fdbg.log("GPU", "rAF2 complete: " + (performance.now() - gpuT).toFixed(1) + "ms — host in DOM: " + !!document.getElementById("flicker-gpu-host"));
+          resolve();
+        });
+      });
+    });
+  }
+
+  function shouldShowBlockingAssetWarm() {
+    try {
+      return sessionStorage.getItem(SESSION_ASSETS_WARM_KEY) !== TILE_ASSET_VERSION;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function markSessionAssetsWarmed() {
+    try {
+      sessionStorage.setItem(SESSION_ASSETS_WARM_KEY, TILE_ASSET_VERSION);
+    } catch (e) {}
+  }
+
+  function hideAssetPrecacheOverlay() {
+    const el = document.getElementById("assetPrecacheOverlay");
+    if (!el) return;
+    el.classList.add("is-done");
+    el.setAttribute("aria-hidden", "true");
+    window.setTimeout(function () {
+      el.classList.remove("is-active");
+      el.classList.remove("is-done");
+    }, 340);
+  }
+
+  function showAssetPrecacheOverlay() {
+    const el = document.getElementById("assetPrecacheOverlay");
+    if (!el) return;
+    el.classList.remove("is-done");
+    el.classList.add("is-active");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+  function formatCoeffPop(n) {
+    if (!Number.isFinite(n) || n <= 0) return null;
+    const rounded = Math.round(n * 100) / 100;
+    if (rounded <= 0) return null;
+    let s = rounded.toFixed(2);
+    s = s.replace(/\.?0+$/, "");
+    return "x" + s;
+  }
+
+  /** Полёт тайла при merge: assets/js/merge-flight.js */
+  function runAnimateMergeSequence(pairs, onFlightsComplete, levels) {
+    const fn =
+      window.MergeGameAnimations && window.MergeGameAnimations.animateMergeSequence;
+    if (typeof fn !== "function") {
+      console.error("merge-flight.js: MergeGameAnimations.animateMergeSequence not found");
+      onFlightsComplete();
+      return;
+    }
+    fn(pairs, onFlightsComplete, levels, {
+      getGridCellsSnapshot: getGridCellsSnapshot,
+      registerPendingMergeCoeff: registerPendingMergeCoeff,
+      coeffGainLabelForMerge: coeffGainLabelForMerge,
+    });
+  }
+
+  // Обработка цепочки слияний: за один проход сливается только одна пара, затем рекурсия на новой сетке.
+  // coeffBaseBeforeMergeStep — totalCoeff до слияний этого шага; totalCoeff обновляется один раз в конце цепочки
+  function processMergeChain(
+    levels,
+    onDone,
+    coeffBaseBeforeMergeStep,
+    skipSpawnSettleDelay
+  ) {
+    const coeffBase = coeffBaseBeforeMergeStep;
+    const pairsAll = findPairs(levels);
+    const pairs =
+      pairsAll && pairsAll.length > 0 ? [pairsAll[0]] : [];
+    if (!pairs || pairs.length === 0) {
+      const nextCoeff = coeffBase + calcRoundCoeff(levels);
+      currentGrid = levels;
+      /* Ждём завершения tile-merge-resolve анимации последнего merge перед тем как пересобрать DOM.
+         Без этого updateUI() вызывает innerHTML="" через ~180ms (MERGE_CHAIN_GAP_AFTER_PATCH_MS),
+         а анимация длится 340ms + 3×rAF ≈ 390ms — последний кадр обрезается. */
+      runAfterMergeResolveSettled(function () {
+        // Во время полёта +кэф основной коэффициент не пересчитываем.
+        updateUI();
+        const badgeCount = levels.reduce((acc, level) => {
+          if (level === 0 || level == null || level === TILE_CRASH) {
+            return acc;
+          }
+          return acc + 1;
+        }, 0);
+        const COEFF_RECALC_EARLIER_MS = 60;
+        const coeffRecalcDelayMs = Math.max(
+          0,
+          70 + 130 + 285 + Math.max(0, badgeCount - 1) * 15 - COEFF_RECALC_EARLIER_MS
+        );
+        let coeffApplied = false;
+        window.setTimeout(() => {
+          if (coeffApplied) return;
+          coeffApplied = true;
+          totalCoeff = nextCoeff;
+          updateUI(undefined, undefined, { skipGridRebuild: true });
+          flashCoeffRecalc();
+        }, coeffRecalcDelayMs);
+        flyPendingMergeCoeffsToTotal(levels, () => {
+          if (!coeffApplied) {
+            coeffApplied = true;
+            totalCoeff = nextCoeff;
+            updateUI(undefined, undefined, { skipGridRebuild: true });
+            flashCoeffRecalc();
+          }
+          onDone(levels);
+        }, { skipGlint: isGridFullNoPairs(levels) });
+      });
+      return;
+    }
+
+    const mergeDecodePromise = preloadMergedAnchorFaceUrls(
+      Math.min(levels[pairs[0][0]] + 1, MAX_LEVEL)
+    );
+
+    function clearMergePendingHighlight(preserveCellIndices) {
+      if (!gridEl) return;
+      const preserve =
+        preserveCellIndices instanceof Set ? preserveCellIndices : null;
+      gridEl.querySelectorAll(".cell-face.tile-asset").forEach(function (el) {
+        if (!el.classList.contains("cell-face--merge-pending")) return;
+        const cell = el.closest(".cell");
+        if (!cell) return;
+        const idx = Array.prototype.indexOf.call(gridEl.children, cell);
+        if (idx < 0) return;
+        if (preserve && preserve.has(idx)) return;
+        el.classList.remove("cell-face--merge-pending", "tile-glow-frozen");
+      });
+    }
+
+    function getMaxSpawnSettleDelayMs() {
+      if (!gridEl) return 0;
+      const faces = gridEl.querySelectorAll(".cell-face--spawn-in");
+      if (!faces.length) return 0;
+      let maxDelay = 0;
+      for (let i = 0; i < faces.length; i++) {
+        const raw = getComputedStyle(faces[i]).getPropertyValue("--spawn-delay").trim();
+        let d = 0;
+        const m = raw.match(/^([\d.]+)ms$/);
+        if (m) d = parseFloat(m[1], 10) || 0;
+        maxDelay = Math.max(maxDelay, d);
+      }
+      return maxDelay + MERGE_SPAWN_POP_MS + MERGE_SPAWN_SETTLE_BUFFER_MS;
+    }
+
+    function applyMergePendingHighlight(pairList) {
+      const snapshot = getGridCellsSnapshot();
+      pairList.forEach(function (pair) {
+        const a = pair[0];
+        const m = pair[1];
+        [a, m].forEach(function (idx) {
+          const cell = snapshot[idx];
+          const face = cell && cell.querySelector(".cell-face.tile-asset");
+          if (!face) return;
+          if (!face.classList.contains("cell-face--merge-pending")) {
+            face.classList.add("cell-face--merge-pending");
+          }
+          /* tile-glow-frozen уже установлен после предыдущего resolve — не сбрасываем,
+             чтобы пропустить ramp-анимацию (glow уже на полной яркости). */
+        });
+      });
+    }
+
+    clearMergePendingHighlight(new Set([pairs[0][0], pairs[0][1]]));
+
+    /* Первый merge шага ждёт spawn-in; для следующих пар — без внешнего setTimeout(0): иначе кадр
+       после patch без merge-pending (мерцание перед «загоранием»). */
+    const spawnSettleWaitMs = getMaxSpawnSettleDelayMs();
+
+    const runMergeFlightPhase = function () {
+      runAnimateMergeSequence(
+        pairs,
+        function () {
+          const merged = mergeLevelsFromPairs(levels, pairs);
+          currentGrid = merged;
+          const anchorLevel = merged[pairs[0][0]];
+
+          function applyPatchAndStartResolve() {
+            patchGridCellsAfterOneMerge(merged, pairs[0]);
+            /* Тройной rAF после смены background: WebKit нужно ≥2 кадра для GPU texture upload
+               (1-й кадр — invalidate слоя, 2-й — upload декодированного bitmap, 3-й — stable). */
+            const patchT = performance.now();
+            fdbg.log("MERGE", "patch done → background-image changed, waiting 3×rAF before resolve anim");
+            requestAnimationFrame(() => {
+              fdbg.log("MERGE", "rAF1: " + (performance.now() - patchT).toFixed(1) + "ms after patch");
+              requestAnimationFrame(() => {
+                fdbg.log("MERGE", "rAF2: " + (performance.now() - patchT).toFixed(1) + "ms after patch");
+                requestAnimationFrame(() => {
+                  fdbg.log("MERGE", "rAF3: " + (performance.now() - patchT).toFixed(1) + "ms — adding tile-merge-resolve | gpu-host alive: " + !!document.getElementById("flicker-gpu-host"));
+                  const cells = getGridCellsSnapshot();
+                  const nextPairs = findPairs(merged);
+                  const nextPair0 =
+                    nextPairs && nextPairs.length > 0 ? nextPairs[0] : null;
+                  pairs.forEach((pair) => {
+                    const aIdx = pair[0];
+                    const cell = cells[aIdx];
+                    const face = cell && cell.querySelector(".cell-face");
+                    if (!face || !face.classList.contains("tile-asset")) return;
+                    const anchorJoinsNextMerge =
+                      nextPair0 &&
+                      (nextPair0[0] === aIdx || nextPair0[1] === aIdx);
+                    /* Снимаем merge-pending в том же тике, что и tile-merge-resolve — иначе кадр без свечения
+                       между патчем и анимацией (keyframes glow начинались с opacity: 0). */
+                    face.classList.remove("cell-face--merge-pending");
+                    face.classList.remove("tile-glow-frozen");
+                    face.classList.add("tile-merge-resolve");
+                    if (anchorJoinsNextMerge) {
+                      face.classList.add("tile-merge-resolve--keep-glow");
+                    }
+                    window.setTimeout(() => {
+                      face.classList.remove("tile-merge-resolve");
+                      face.classList.remove("tile-merge-resolve--keep-glow");
+                      if (anchorJoinsNextMerge) {
+                        /* Переходим в frozen-pending: glow уже на полной яркости от keep-glow. */
+                        face.classList.add("cell-face--merge-pending");
+                        face.classList.add("tile-glow-frozen");
+                      }
+                    }, MERGE_RESOLVE_MS + ANIMATION_SETTLE_BUFFER_MS);
+                  });
+                });
+              });
+            });
+            window.setTimeout(() => {
+              processMergeChain(merged, onDone, coeffBase, true);
+            }, MERGE_CHAIN_GAP_AFTER_PATCH_MS);
+          }
+
+          mergeDecodePromise
+            .then(function () {
+              return preloadMergedAnchorFaceUrls(anchorLevel);
+            })
+            .then(applyPatchAndStartResolve)
+            .catch(applyPatchAndStartResolve);
+        },
+        levels
+      );
+    };
+
+    if (skipSpawnSettleDelay === true) {
+      applyMergePendingHighlight(pairs);
+      window.setTimeout(function () {
+        /* Glow держим до конца полёта; снимается при patchGridCellsAfterOneMerge (новые ячейки). */
+        runMergeFlightPhase();
+      }, MERGE_PENDING_HIGHLIGHT_MS);
+    } else {
+      window.setTimeout(function () {
+        applyMergePendingHighlight(pairs);
+        window.setTimeout(function () {
+          /* Glow до полёта; снимается при patch следующей пары. */
+          runMergeFlightPhase();
+        }, MERGE_PENDING_HIGHLIGHT_MS);
+      }, spawnSettleWaitMs);
+    }
+  }
+
+  // ------- СОСТОЯНИЕ И UI -------
+
+  let balance = 1000;
+  let totalCoeff = 0.0;
+  let roundIndex = 0;
+  let currentGrid = new Array(9).fill(0);
+  let sessionAlive = true;
+  let sessionBet = 0;
+  let isAnimating = false;
+  let pendingWin = 0;
+  let isStepLockedByBetStart = false;
+  let bonusTileAppeared = false; // Флаг появления бонусного тайла в сессии
+  // 1: гарантированный "нет пар" на 5 шаг, 2: гарантированный crash на 3 шаг, 3: гарантированный bonus на 3 шаг
+  /** Накопленные «+кэф» за шаг: в ячейке до конца цепочки merge, затем полёт в coeffText */
+  let pendingMergeCoeffs = [];
+  let pendingMergeCoeffLayer = null;
+
+  const gridEl = document.getElementById("grid");
+  const pageStackEl = document.querySelector(".page-stack");
+  /** Два промежутка по 6px между тремя колонками сетки (синхронно с gap в CSS). */
+  const GRID_COL_GAPS_PX = 12;
+
+  let lastIntegerPageStackW = -1;
+  /** Карточка колонки — целая ширина в px (без дробных layout от flex/%). */
+  function syncPageStackIntegerWidth() {
+    if (!pageStackEl) return;
+    const r = pageStackEl.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(r.width));
+    if (w === lastIntegerPageStackW) return;
+    lastIntegerPageStackW = w;
+    pageStackEl.style.width = w + "px";
+    pageStackEl.style.maxWidth = w + "px";
+  }
+
+  /**
+   * Целая ширина ячейки сетки в px на любом viewport (не minmax(1fr)).
+   * widthHintPx — при полной пересборке сетки до innerHTML.
+   */
+  function syncGridCellPxSnapped(widthHintPx) {
+    if (!gridEl) return;
+    const wRaw =
+      typeof widthHintPx === "number" && widthHintPx >= 1
+        ? widthHintPx
+        : gridEl.getBoundingClientRect().width;
+    const w = Math.max(1, Math.floor(wRaw));
+    const cellPx = Math.max(1, Math.floor((w - GRID_COL_GAPS_PX) / 3));
+    const prevRaw = gridEl.style.getPropertyValue("--grid-cell-px").trim();
+    let prevNum = NaN;
+    if (prevRaw.endsWith("px")) {
+      prevNum = parseInt(prevRaw.slice(0, -2), 10);
+    }
+    if (
+      gridEl.classList.contains("grid--snap-cells") &&
+      prevNum === cellPx
+    ) {
+      return;
+    }
+    gridEl.style.setProperty("--grid-cell-px", cellPx + "px");
+    gridEl.classList.add("grid--snap-cells");
+  }
+
+  let layoutIntegerSnapTimer = null;
+  function scheduleLayoutIntegerSnap() {
+    if (!gridEl || isAnimating) return;
+    if (layoutIntegerSnapTimer != null) {
+      clearTimeout(layoutIntegerSnapTimer);
+    }
+    layoutIntegerSnapTimer = window.setTimeout(function () {
+      layoutIntegerSnapTimer = null;
+      requestAnimationFrame(function () {
+        syncPageStackIntegerWidth();
+        syncGridCellPxSnapped();
+      });
+    }, 100);
+  }
+
+  try {
+    window.addEventListener("resize", scheduleLayoutIntegerSnap);
+    window.addEventListener("load", scheduleLayoutIntegerSnap);
+  } catch (e) {
+    void e;
+  }
+
+  try {
+    const mqSnap = window.matchMedia(
+      "(max-width: " + MOBILE_TILES_MAX_WIDTH_PX + "px)"
+    );
+    let mqSnapSyncTimer = null;
+    const onSnapMqChange = function () {
+      if (!gridEl || isAnimating) return;
+      lastIntegerPageStackW = -1;
+      if (mqSnapSyncTimer != null) {
+        clearTimeout(mqSnapSyncTimer);
+      }
+      mqSnapSyncTimer = window.setTimeout(function () {
+        mqSnapSyncTimer = null;
+        requestAnimationFrame(function () {
+          syncPageStackIntegerWidth();
+          syncGridCellPxSnapped();
+        });
+      }, 80);
+    };
+    if (typeof mqSnap.addEventListener === "function") {
+      mqSnap.addEventListener("change", onSnapMqChange);
+    } else if (typeof mqSnap.addListener === "function") {
+      mqSnap.addListener(onSnapMqChange);
+    }
+  } catch (e) {
+    void e;
+  }
+
+  /** Ячейки только сетки 3×3, порядок = индекс 0…8 (не document.querySelectorAll — иначе ломается порядок/индексы). */
+  function getGridCellsSnapshot() {
+    if (!gridEl) return [];
+    return Array.from(gridEl.children);
+  }
+
+  function getOrCreatePendingCoeffLayer() {
+    if (pendingMergeCoeffLayer && pendingMergeCoeffLayer.parentNode) {
+      return pendingMergeCoeffLayer;
+    }
+    const el = document.createElement("div");
+    el.className = "merge-coeff-pending-layer";
+    el.setAttribute("aria-hidden", "true");
+    document.body.appendChild(el);
+    pendingMergeCoeffLayer = el;
+    return el;
+  }
+
+  function layoutPendingMergeCoeffs() {
+    if (!pendingMergeCoeffs.length) {
+      if (pendingMergeCoeffLayer) {
+        pendingMergeCoeffLayer.replaceChildren();
+      }
+      return;
+    }
+    const layer = getOrCreatePendingCoeffLayer();
+    layer.replaceChildren();
+    const cells = getGridCellsSnapshot();
+    const countByAnchor = {};
+    pendingMergeCoeffs.forEach((entry) => {
+      const n = countByAnchor[entry.anchorIdx] || 0;
+      countByAnchor[entry.anchorIdx] = n + 1;
+      const cell = cells[entry.anchorIdx];
+      const face = cell && cell.querySelector(".cell-face");
+      if (!face) return;
+      const r = face.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return;
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2 + n * 17;
+      const badge = document.createElement("span");
+      badge.className = "merge-coeff-pending-badge";
+      badge.textContent = entry.label;
+      badge.style.left = cx + "px";
+      badge.style.top = cy + "px";
+      layer.appendChild(badge);
+    });
+  }
+
+  function registerPendingMergeCoeff(anchorIdx, coeffValue) {
+    const label = formatCoeffPop(coeffValue);
+    if (!label) return;
+    pendingMergeCoeffs.push({ anchorIdx: anchorIdx, label: label });
+  }
+
+  function runGridFailPreflash(done) {
+    const GRID_FAIL_EMBLEM_MS = 30;
+    const cells = getGridCellsSnapshot();
+    cells.forEach((cell) => {
+      const face = cell && cell.querySelector(".cell-face.tile-asset");
+      if (!face) return;
+      face.classList.add("tile-emblem-glow-active");
+      const emblem = face.querySelector(".tile-emblem");
+      const glow = face.querySelector(".tile-emblem-glow");
+      if (emblem) {
+        emblem.style.setProperty("opacity", "0.5", "important");
+      }
+      if (glow) {
+        glow.style.setProperty("opacity", "0.5", "important");
+      }
+    });
+
+    window.setTimeout(() => {
+      if (typeof done === "function") done();
+    }, GRID_FAIL_EMBLEM_MS);
+  }
+
+  function applyNoPairsFailVisuals(opts) {
+    const plateFadeMs =
+      opts && typeof opts.plateFadeMs === "number" ? opts.plateFadeMs : 0;
+    const emblemOpacity =
+      opts && typeof opts.emblemOpacity === "number"
+        ? Math.max(0, Math.min(1, opts.emblemOpacity))
+        : 0.2;
+    const glowOpacity =
+      opts && typeof opts.glowOpacity === "number"
+        ? Math.max(0, Math.min(1, opts.glowOpacity))
+        : emblemOpacity;
+    const failUrl = tileBgUrlFromRel("assets/tiles/tile-fail-plate.png");
+    const cells = getGridCellsSnapshot();
+    cells.forEach((cell) => {
+      const face = cell && cell.querySelector(".cell-face.tile-asset");
+      if (!face) return;
+      face.classList.remove("tile-emblem-glow-active");
+      const plate = face.querySelector(".tile-plate");
+      if (!plate) return;
+
+      if (plateFadeMs > 0) {
+        if (face.querySelector(".tile-plate-fail-crossfade")) return;
+        const overlay = document.createElement("span");
+        overlay.className = "tile-plate-fail-crossfade";
+        overlay.setAttribute("aria-hidden", "true");
+        overlay.style.backgroundImage = failUrl;
+        overlay.style.transition = "opacity " + plateFadeMs + "ms ease-out";
+        overlay.style.opacity = "0";
+        const glowEl = face.querySelector(".tile-emblem-glow");
+        if (glowEl) {
+          face.insertBefore(overlay, glowEl);
+        } else {
+          face.insertBefore(overlay, plate.nextSibling);
+        }
+        const emblem = face.querySelector(".tile-emblem");
+        const glow = face.querySelector(".tile-emblem-glow");
+        /* Запускаем fade плашки и эмблемы одновременно */
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            overlay.style.opacity = "1";
+            if (emblem) {
+              emblem.style.transition = "opacity " + plateFadeMs + "ms ease-out";
+              emblem.style.setProperty("opacity", String(emblemOpacity), "important");
+            }
+            if (glow) {
+              glow.style.transition = "opacity " + plateFadeMs + "ms ease-out";
+              glow.style.setProperty("opacity", "0", "important");
+            }
+          });
+        });
+        window.setTimeout(() => {
+          plate.style.backgroundImage = failUrl;
+          overlay.remove();
+          face.classList.add("tile-fail-muted");
+          if (emblem) emblem.style.transition = "";
+          if (glow) glow.style.transition = "";
+        }, plateFadeMs);
+      } else {
+        plate.style.backgroundImage = failUrl;
+        face.classList.add("tile-fail-muted");
+        const emblem = face.querySelector(".tile-emblem");
+        const glow = face.querySelector(".tile-emblem-glow");
+        if (emblem) {
+          emblem.style.setProperty("opacity", String(emblemOpacity), "important");
+        }
+        if (glow) {
+          glow.style.setProperty("opacity", String(glowOpacity), "important");
+        }
+      }
+    });
+  }
+
+  function suppressEmblemGlowForCrash() {
+    const cells = getGridCellsSnapshot();
+    cells.forEach((cell) => {
+      const face = cell && cell.querySelector(".cell-face.tile-asset");
+      if (!face) return;
+      face.classList.remove("tile-emblem-glow-active");
+      const emblem = face.querySelector(".tile-emblem");
+      const glow = face.querySelector(".tile-emblem-glow");
+      if (emblem) {
+        emblem.style.setProperty("opacity", "0.5", "important");
+      }
+      if (glow) {
+        glow.style.setProperty("opacity", "0", "important");
+      }
+    });
+  }
+
+  function clearTransientMergeVisualState() {
+    const cells = getGridCellsSnapshot();
+    cells.forEach((cell) => {
+      const face = cell && cell.querySelector(".cell-face.tile-asset");
+      if (!face) return;
+      face.classList.remove(
+        "tile-merge-resolve",
+        "tile-merge-resolve--keep-glow",
+        "cell-face--merge-pending",
+        "tile-glow-frozen"
+      );
+    });
+  }
+
+  function runAfterMergeResolveSettled(done) {
+    if (typeof done !== "function") return;
+    let frames = 0;
+    const MAX_FRAMES = 42; // ~700ms @60fps safety cap
+    const tick = () => {
+      const hasResolve = !!(
+        gridEl && gridEl.querySelector(".cell-face.tile-asset.tile-merge-resolve")
+      );
+      if (!hasResolve || frames >= MAX_FRAMES) {
+        done();
+        return;
+      }
+      frames += 1;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function animateGridFailDespawn(done) {
+    const cells = getGridCellsSnapshot();
+    const faceEntries = [];
+    cells.forEach((cell, idx) => {
+      const face = cell && cell.querySelector(".cell-face");
+      if (!face) return;
+      faceEntries.push({ idx: idx, face: face });
+    });
+    if (faceEntries.length === 0) {
+      if (typeof done === "function") done();
+      return;
+    }
+
+    const DESPAWN_DUR_MS = 35;
+    faceEntries.forEach((entry) => {
+      entry.face.classList.remove("cell-face--despawn-out");
+      void entry.face.offsetWidth;
+      entry.face.classList.add("cell-face--despawn-out");
+    });
+
+    const totalMs = DESPAWN_DUR_MS + ANIMATION_SETTLE_BUFFER_MS;
+    window.setTimeout(() => {
+      if (typeof done === "function") done();
+    }, totalMs);
+  }
+
+  function flyPendingMergeCoeffsToTotal(levels, done, opts) {
+    const layer = getOrCreatePendingCoeffLayer();
+    pendingMergeCoeffs = [];
+    layer.replaceChildren();
+
+    if (!levels) {
+      if (typeof done === "function") done();
+      return;
+    }
+
+    const cells = getGridCellsSnapshot();
+    const badges = [];
+    const glintFaces = [];
+    for (let i = 0; i < levels.length; i++) {
+      const level = levels[i];
+      if (level === 0 || level == null || level === TILE_CRASH) continue;
+      const cell = cells[i];
+      const face = cell && cell.querySelector(".cell-face");
+      if (!face) continue;
+      glintFaces.push(face);
+      const r = face.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) continue;
+      const coeffValue =
+        level === TILE_BONUS ? BONUS_TILE_COEFF : COEFF_BY_LEVEL[level] || 0;
+      const label = formatCoeffPop(coeffValue);
+      if (!label) continue;
+      const badge = document.createElement("span");
+      badge.className = "merge-coeff-pending-badge";
+      badge.textContent = label;
+      const holdTopDy = -(r.height * 0.22) - 15;
+      badge.dataset.holdDy = String(holdTopDy);
+      badge.style.left = r.left + r.width / 2 + "px";
+      badge.style.top = r.top + r.height / 2 + "px";
+      layer.appendChild(badge);
+      badges.push(badge);
+    }
+
+    if (badges.length === 0) {
+      if (typeof done === "function") done();
+      return;
+    }
+
+    const skipGlint = opts && opts.skipGlint;
+    if (!skipGlint) {
+      glintFaces.forEach((face, idx) => {
+        const delay = idx * 18;
+        window.setTimeout(() => {
+          face.classList.remove("tile-merge-resolve");
+          face.classList.remove("tile-final-glint");
+          void face.offsetWidth;
+          face.classList.add("tile-final-glint");
+          window.setTimeout(() => {
+            face.classList.remove("tile-final-glint");
+          }, 90);
+        }, delay);
+      });
+    }
+
+    let settled = false;
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      try {
+        layer.replaceChildren();
+      } catch (e) {}
+      if (typeof done === "function") done();
+    };
+    let remaining = badges.length;
+    const finishOne = () => {
+      if (settled) return;
+      remaining--;
+      if (remaining <= 0) settle();
+    };
+    function getCoeffTargetPoint() {
+      if (coeffFlyAnchor && coeffFlyAnchor.getBoundingClientRect) {
+        const ar = coeffFlyAnchor.getBoundingClientRect();
+        if (ar && ar.width >= 0 && ar.height >= 0) {
+          return {
+            x: ar.left + ar.width / 2,
+            y: ar.top + ar.height / 2,
+          };
+        }
+      }
+      return null;
+    }
+    const burstDur = 70;
+    const holdInCellMs = 130;
+    const arcDur = 285;
+    const perBadgeDelay = 15;
+    badges.forEach((badge, i) => {
+      const delay = i * perBadgeDelay;
+      const startX = parseFloat(badge.style.left) || 0;
+      const startY = parseFloat(badge.style.top) || 0;
+      const holdDx = 0;
+      const holdDy = parseFloat(badge.dataset.holdDy || "") || -16;
+      const burstDx = 0;
+      const burstDy = holdDy * 0.72;
+      const endFly = () => {
+        try {
+          badge.remove();
+        } catch (e2) {}
+        finishOne();
+      };
+      if (typeof badge.animate === "function") {
+        try {
+          const burstAndHold = badge.animate(
+            [
+              {
+                transform: "translate(-50%, -50%) translate(0px, 0px) scale(0.65)",
+                opacity: 0,
+              },
+              {
+                transform:
+                  "translate(-50%, -50%) translate(" +
+                  burstDx +
+                  "px, " +
+                  burstDy +
+                  "px) scale(0.98)",
+                opacity: 1,
+                offset: 0.35,
+              },
+              {
+                transform:
+                  "translate(-50%, -50%) translate(" +
+                  holdDx +
+                  "px, " +
+                  holdDy +
+                  "px) scale(1)",
+                opacity: 1,
+                offset: 1,
+              },
+            ],
+            {
+              duration: burstDur + holdInCellMs,
+              delay: delay,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              fill: "forwards",
+            }
+          );
+          const startArc = () => {
+            try {
+              const targetPoint = getCoeffTargetPoint();
+              const targetX = targetPoint ? targetPoint.x : startX;
+              const targetY = targetPoint ? targetPoint.y : startY;
+              const endDx = targetX - startX - holdDx;
+              const endDy = targetY - startY - holdDy;
+              const arcAnim = badge.animate(
+                [
+                  {
+                    transform:
+                      "translate(-50%, -50%) translate(" +
+                      holdDx +
+                      "px, " +
+                      holdDy +
+                      "px) scale(1)",
+                    opacity: 1,
+                  },
+                  {
+                    transform:
+                      "translate(-50%, -50%) translate(" +
+                      endDx +
+                      "px, " +
+                      endDy +
+                      "px) scale(0.9)",
+                    opacity: 0,
+                    offset: 0.94,
+                  },
+                  {
+                    transform:
+                      "translate(-50%, -50%) translate(" +
+                      endDx +
+                      "px, " +
+                      endDy +
+                      "px) scale(0.9)",
+                    opacity: 0,
+                  },
+                ],
+                {
+                  duration: arcDur,
+                  easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                  fill: "forwards",
+                }
+              );
+              if (arcAnim && arcAnim.finished) {
+                arcAnim.finished.then(endFly).catch(endFly);
+              } else {
+                window.setTimeout(endFly, arcDur + 24);
+              }
+            } catch (eArc) {
+              window.setTimeout(endFly, arcDur + 24);
+            }
+          };
+          if (burstAndHold && burstAndHold.finished) {
+            burstAndHold.finished.then(startArc).catch(startArc);
+          } else {
+            window.setTimeout(startArc, burstDur + holdInCellMs + delay + 24);
+          }
+        } catch (e3) {
+          window.setTimeout(endFly, burstDur + holdInCellMs + arcDur + delay + 24);
+        }
+      } else {
+        window.setTimeout(endFly, burstDur + holdInCellMs + arcDur + delay + 24);
+      }
+    });
+    window.setTimeout(() => {
+      if (settled) return;
+      badges.forEach((b) => {
+        try {
+          b.remove();
+        } catch (e4) {}
+      });
+      settle();
+    }, burstDur + holdInCellMs + arcDur + (badges.length - 1) * perBadgeDelay + 180);
+  }
+
+  const coeffText = document.getElementById("coeffText");
+  const coeffFlyAnchor = document.getElementById("coeffFlyAnchor");
+  const coeffStakeAmount = document.getElementById("coeffStakeAmount");
+  const coeffWinAmount = document.getElementById("coeffWinAmount");
+  const stepButton = document.getElementById("stepButton");
+  const cashoutButton = document.getElementById("cashoutButton");
+  const cashoutProfitText = document.getElementById("cashoutProfitText");
+  const winToastBackdrop = document.getElementById("winToastBackdrop");
+  let winToastCollectTimer = null;
+
+  const gameRoot = document.getElementById("gameRoot");
+  const crashOverlay = document.getElementById("crashOverlay");
+  const noPairsOverlay = document.getElementById("noPairsOverlay");
+  const noPairsToastOverlay = document.getElementById("noPairsToastOverlay");
+  const noPairsToastTitle = document.getElementById("noPairsToastTitle");
+  const noPairsToastAmount = document.getElementById("noPairsToastAmount");
+  const betSheetBackdrop = document.getElementById("betSheetBackdrop");
+  const betSheetInput = document.getElementById("betSheetInput");
+  const betSheetMinus = document.getElementById("betSheetMinus");
+  const betSheetPlus = document.getElementById("betSheetPlus");
+  const betSheetConfirm = document.getElementById("betSheetConfirm");
+  const coeffStakeBlock = document.getElementById("coeffStakeBlock");
+  const subheaderBalance = document.getElementById("subheaderBalance");
+  const cashoutCelebrationOverlay = document.getElementById("cashoutCelebrationOverlay");
+  const cashoutCelebrationAmount = document.getElementById("cashoutCelebrationAmount");
+  const cashoutCelebrationCoeff = document.getElementById("cashoutCelebrationCoeff");
+
+  let cashoutCelebrationTimer = null;
+
+  function hideCashoutCelebrationOverlay() {
+    if (cashoutCelebrationTimer != null) {
+      clearTimeout(cashoutCelebrationTimer);
+      cashoutCelebrationTimer = null;
+    }
+    if (cashoutCelebrationOverlay) {
+      cashoutCelebrationOverlay.classList.remove("is-visible");
+      cashoutCelebrationOverlay.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function showCashoutCelebrationOverlay(winAmount, coeff) {
+    if (!cashoutCelebrationOverlay || !cashoutCelebrationAmount || !cashoutCelebrationCoeff) {
+      return;
+    }
+    cashoutCelebrationAmount.textContent = formatMoney(winAmount);
+    cashoutCelebrationCoeff.textContent = "x" + Number(coeff).toFixed(2);
+    cashoutCelebrationOverlay.classList.add("is-visible");
+    cashoutCelebrationOverlay.setAttribute("aria-hidden", "false");
+  }
+
+
+  function stakeTapOpensBetSheet() {
+    return (
+      sessionAlive &&
+      sessionBet === 0 &&
+      roundIndex === 0 &&
+      !isAnimating &&
+      !winToastBackdrop.classList.contains("visible") &&
+      !betSheetBackdrop.classList.contains("visible")
+    );
+  }
+
+  function formatMoney(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "$0.00";
+    return "$" + n.toFixed(2);
+  }
+
+  function showNoPairsToastOverlay() {
+    if (!noPairsToastOverlay) return;
+    noPairsToastOverlay.classList.remove("no-pairs-toast-overlay--exit");
+    noPairsToastOverlay.classList.add("no-pairs-toast-overlay--enter");
+    noPairsToastOverlay.classList.add("visible");
+    window.setTimeout(function () {
+      if (!noPairsToastOverlay) return;
+      noPairsToastOverlay.classList.remove("no-pairs-toast-overlay--enter");
+    }, 260);
+  }
+
+  function hideNoPairsToastOverlay() {
+    if (!noPairsToastOverlay) return;
+    noPairsToastOverlay.classList.remove("no-pairs-toast-overlay--enter");
+    noPairsToastOverlay.classList.add("no-pairs-toast-overlay--exit");
+    window.setTimeout(function () {
+      if (!noPairsToastOverlay) return;
+      noPairsToastOverlay.classList.remove("visible");
+      noPairsToastOverlay.classList.remove("no-pairs-toast-overlay--exit");
+    }, 260);
+  }
+
+  function flashCoeffRecalc() {
+    // flash removed
+  }
+
+  function setNoPairsToastWinAmount(v) {
+    if (!noPairsToastAmount) return;
+    const safeValue = Number.isFinite(v) ? Math.max(0, v) : 0;
+    noPairsToastAmount.textContent = formatMoney(safeValue);
+  }
+
+  function setTopToastTitle(text) {
+    if (!noPairsToastTitle) return;
+    noPairsToastTitle.textContent = text || "";
+  }
+
+  function hasConfirmedBetSheet() {
+    try {
+      return localStorage.getItem(BET_SHEET_STORAGE_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** Same ordering/randomness as in updateUI for --spawn-delay (bomb last among multi-spawn). */
+  function computeSpawnDelays(spawnInMask, grid) {
+    const spawnDelayByIndex = {};
+    if (!spawnInMask) return spawnDelayByIndex;
+    const spawnOrder = [];
+    for (let i = 0; i < spawnInMask.length; i++) {
+      if (spawnInMask[i]) spawnOrder.push(i);
+    }
+    for (let i = spawnOrder.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      const t = spawnOrder[i];
+      spawnOrder[i] = spawnOrder[j];
+      spawnOrder[j] = t;
+    }
+    const crashAt = spawnOrder.findIndex((idx) => grid[idx] === TILE_CRASH);
+    if (crashAt !== -1 && spawnOrder.length > 1) {
+      const [crashIdx] = spawnOrder.splice(crashAt, 1);
+      spawnOrder.push(crashIdx);
+    }
+    spawnOrder.forEach((idx, order) => {
+      /* 50ms base: даёт браузеру ≥1 rAF-кадр для GPU texture upload до первого видимого кадра спавна.
+         Без этого WebKit может показать пустой первый кадр при opacity > 0. */
+      spawnDelayByIndex[idx] = 25 + order * 27 + ((Math.random() * 11) | 0);
+    });
+    return spawnDelayByIndex;
+  }
+
+  function buildGridCellElement(level, index, spawnInMask, spawnDelayByIndex) {
+    const cell = document.createElement("div");
+    const slot = document.createElement("div");
+    slot.className = "cell-slot";
+    slot.setAttribute("aria-hidden", "true");
+    cell.appendChild(slot);
+
+    if (level === 0) {
+      cell.className = "cell empty";
+      cell.removeAttribute("aria-label");
+    } else {
+      const face = document.createElement("div");
+      const span = document.createElement("div");
+      span.className = "cell-level";
+
+      if (level === TILE_CRASH) {
+        cell.className = "cell";
+        face.className = "cell-face crash";
+        cell.removeAttribute("aria-label");
+        const crashPlate = document.createElement("span");
+        crashPlate.className = "crash-plate";
+        const crashEmblem = document.createElement("span");
+        crashEmblem.className = "crash-emblem";
+        crashPlate.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-crash-plate.png"
+        );
+        crashEmblem.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-crash-emblem.png"
+        );
+        face.appendChild(crashPlate);
+        face.appendChild(crashEmblem);
+        span.textContent = "";
+      } else if (level === TILE_BONUS) {
+        cell.className = "cell";
+        face.className = "cell-face tile-asset";
+        cell.removeAttribute("aria-label");
+        const plate = document.createElement("span");
+        plate.className = "tile-plate";
+        plate.setAttribute("aria-hidden", "true");
+        const emblem = document.createElement("span");
+        emblem.className = "tile-emblem";
+        emblem.setAttribute("aria-hidden", "true");
+        plate.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-bonus-plate.png"
+        );
+        emblem.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-bonus-emblem.png"
+        );
+        face.appendChild(plate);
+        face.appendChild(emblem);
+        span.textContent = "";
+      } else {
+        cell.className = "cell";
+        face.className = "cell-face tile-asset";
+        const plate = document.createElement("span");
+        plate.className = "tile-plate";
+        plate.setAttribute("aria-hidden", "true");
+        const emblem = document.createElement("span");
+        emblem.className = "tile-emblem";
+        emblem.setAttribute("aria-hidden", "true");
+        plate.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-" + level + "-plate.png"
+        );
+        const emblemExt = "png";
+        emblem.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-" + level + "-emblem." + emblemExt
+        );
+        face.setAttribute("aria-label", "Тайл уровня " + level);
+        span.textContent = "";
+        face.appendChild(plate);
+        const emblemGlow = document.createElement("span");
+        emblemGlow.className = "tile-emblem-glow";
+        emblemGlow.setAttribute("aria-hidden", "true");
+        emblemGlow.style.backgroundImage = tileBgUrlFromRel(
+          "assets/tiles/tile-" + level + "-emblem-glow." + emblemExt
+        );
+        face.appendChild(emblemGlow);
+        face.appendChild(emblem);
+      }
+
+      face.appendChild(span);
+      if (spawnInMask && spawnInMask[index]) {
+        const spawnDelayMs = spawnDelayByIndex[index] || 0;
+        face.style.setProperty("--spawn-delay", spawnDelayMs + "ms");
+        if (level === TILE_CRASH) {
+          face.classList.add("cell-face--crash-spawn-fade");
+        } else {
+          face.classList.add("cell-face--spawn-in");
+        }
+      } else {
+        face.style.removeProperty("--spawn-delay");
+      }
+      cell.appendChild(face);
+    }
+    return cell;
+  }
+
+  function setCellEmptyInPlace(cell) {
+    if (!cell) return false;
+    cell.className = "cell empty";
+    cell.removeAttribute("aria-label");
+    const face = cell.querySelector(".cell-face");
+    if (face) face.remove();
+    return true;
+  }
+
+  /** Обновляет только URL фонов у существующих span — без replaceChild всей ячейки. */
+  function applyNormalTileLevelToFace(face, level) {
+    if (!face || !face.classList.contains("tile-asset")) return false;
+    const plate = face.querySelector(".tile-plate");
+    const emblem = face.querySelector(".tile-emblem");
+    if (!plate || !emblem) return false;
+    const emblemExt = "png";
+    plate.style.backgroundImage = tileBgUrlFromRel(
+      "assets/tiles/tile-" + level + "-plate.png"
+    );
+    emblem.style.backgroundImage = tileBgUrlFromRel(
+      "assets/tiles/tile-" + level + "-emblem." + emblemExt
+    );
+    face.setAttribute("aria-label", "Тайл уровня " + level);
+    let glow = face.querySelector(".tile-emblem-glow");
+    if (!glow) {
+      glow = document.createElement("span");
+      glow.className = "tile-emblem-glow";
+      glow.setAttribute("aria-hidden", "true");
+      face.insertBefore(glow, emblem);
+    }
+    glow.style.backgroundImage = tileBgUrlFromRel(
+      "assets/tiles/tile-" + level + "-emblem-glow." + emblemExt
+    );
+    return true;
+  }
+
+  function updateFooterChrome() {
+    const cashoutAmount = (sessionBet > 0 && sessionAlive && totalCoeff > 0)
+      ? sessionBet * totalCoeff
+      : 0;
+
+    cashoutProfitText.textContent =
+      cashoutAmount > 0 ? formatMoney(cashoutAmount) : "—";
+    cashoutButton.disabled = !(
+      sessionAlive &&
+      cashoutAmount > 0 &&
+      !isAnimating
+    );
+
+    stepButton.disabled = isAnimating || !sessionAlive || isStepLockedByBetStart;
+
+    if (coeffStakeBlock) {
+      const canEditStake = stakeTapOpensBetSheet();
+      coeffStakeBlock.classList.toggle("coeff-stake-block--inactive", !canEditStake);
+      coeffStakeBlock.setAttribute("aria-disabled", canEditStake ? "false" : "true");
+      coeffStakeBlock.tabIndex = canEditStake ? 0 : -1;
+    }
+  }
+
+  /** После одной пары merge: якорь — смена уровня in-place; mover — пустая ячейка. Fallback: replaceChild. */
+  function patchGridCellsAfterOneMerge(mergedLevels, pair) {
+    if (!gridEl || gridEl.children.length !== 9 || !pair) {
+      updateUI();
+      return;
+    }
+    const anchorIdx = pair[0];
+    const moverIdx = pair[1];
+    const anchorLv = mergedLevels[anchorIdx];
+    const moverLv = mergedLevels[moverIdx];
+    const oldAnchor = gridEl.children[anchorIdx];
+    const oldMover = gridEl.children[moverIdx];
+    const anchorFace = oldAnchor && oldAnchor.querySelector(".cell-face.tile-asset");
+    const canPatchInPlace =
+      anchorFace &&
+      moverLv === 0 &&
+      anchorLv > 0 &&
+      anchorLv !== TILE_CRASH &&
+      anchorLv !== TILE_BONUS;
+
+    if (canPatchInPlace && applyNormalTileLevelToFace(anchorFace, anchorLv)) {
+      setCellEmptyInPlace(oldMover);
+      /* merge-pending снимаем только в applyPatchAndStartResolve вместе с tile-merge-resolve —
+         иначе до double rAF новый тайл один кадр без свечения. */
+    } else {
+      const noSpawn = {};
+      gridEl.replaceChild(
+        buildGridCellElement(mergedLevels[anchorIdx], anchorIdx, null, noSpawn),
+        oldAnchor
+      );
+      gridEl.replaceChild(
+        buildGridCellElement(mergedLevels[moverIdx], moverIdx, null, noSpawn),
+        oldMover
+      );
+      const anchorCellAfter = gridEl.children[anchorIdx];
+      const anchorFaceAfter =
+        anchorCellAfter && anchorCellAfter.querySelector(".cell-face.tile-asset");
+      if (anchorFaceAfter) {
+        anchorFaceAfter.classList.add("cell-face--merge-pending");
+      }
+    }
+    updateFooterChrome();
+  }
+
+  function updateUI(spawnInMask, spawnDelayByIndexOverride, uiOpts) {
+    uiOpts = uiOpts || {};
+    const skipGridRebuild = uiOpts.skipGridRebuild === true;
+    const isBetSheetVisible = !!(
+      betSheetBackdrop && betSheetBackdrop.classList.contains("visible")
+    );
+    if (subheaderBalance) {
+      subheaderBalance.textContent = formatMoney(balance);
+    }
+    coeffText.textContent = isBetSheetVisible ? "..." : "x" + totalCoeff.toFixed(2);
+    coeffText.classList.toggle("coeff-value--active", sessionBet > 0);
+    if (isBetSheetVisible || !hasConfirmedBetSheet()) {
+      coeffStakeAmount.textContent = "...";
+      coeffWinAmount.textContent = "...";
+    } else {
+      const stakeShown = sessionBet > 0 ? sessionBet : baseBetAmount;
+      coeffStakeAmount.textContent = formatMoney(stakeShown);
+      const moveShown = sessionBet > 0 ? roundIndex : 0;
+      coeffWinAmount.textContent = String(moveShown);
+    }
+
+    if (skipGridRebuild) {
+      updateFooterChrome();
+      return;
+    }
+
+    gridEl.innerHTML = "";
+    const spawnDelayByIndex =
+      spawnInMask && spawnDelayByIndexOverride !== undefined
+        ? spawnDelayByIndexOverride
+        : spawnInMask
+          ? computeSpawnDelays(spawnInMask, currentGrid)
+          : {};
+    currentGrid.forEach((level, index) => {
+      gridEl.appendChild(
+        buildGridCellElement(level, index, spawnInMask, spawnDelayByIndex)
+      );
+    });
+
+    updateFooterChrome();
+    /* Двойной rAF: стабильная геометрия после innerHTML. Ширину .page-stack не трогаем здесь —
+       при каждом GO иначе на проде дрожит inline-width (субпиксель / адресная строка) и пересчитывается
+       вся сетка как после «пересборки». См. scheduleLayoutIntegerSnap на resize/load. */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        syncGridCellPxSnapped();
+      });
+    });
+  }
+
+  /* Не вешаем updateUI на resize: на мобилке скачет innerWidth (chrome URL bar) — полная пересборка сетки даёт мерцание фонов. */
+  window.addEventListener("orientationchange", function () {
+    window.setTimeout(function () {
+      if (isAnimating || !gridEl) return;
+      updateUI();
+      scheduleLayoutIntegerSnap();
+    }, 320);
+  });
+
+  function clearWinToastTimer() {
+    if (winToastCollectTimer != null) {
+      clearTimeout(winToastCollectTimer);
+      winToastCollectTimer = null;
+    }
+  }
+
+  function showModal(winAmount, reason) {
+    void reason;
+    clearWinToastTimer();
+    pendingWin = winAmount;
+    if (winToastBackdrop) {
+      winToastBackdrop.classList.add("visible");
+      winToastBackdrop.setAttribute("aria-hidden", "false");
+      winToastBackdrop.setAttribute(
+        "aria-label",
+        "Победа. Выигрыш " + formatMoney(winAmount)
+      );
+    }
+    winToastCollectTimer = setTimeout(function () {
+      winToastCollectTimer = null;
+      handleCollect();
+    }, 1500);
+  }
+
+  function resetSession(opts) {
+    opts = opts || {};
+    totalCoeff = 0.0;
+    roundIndex = 0;
+    currentGrid = new Array(9).fill(0);
+    sessionAlive = true;
+    sessionBet = 0;
+    isAnimating = false;
+    pendingWin = 0;
+    isStepLockedByBetStart = false;
+    bonusTileAppeared = false;
+    if (noPairsOverlay) {
+      noPairsOverlay.classList.remove("visible");
+    }
+    if (!opts.skipNoPairsToastOverlayHide && noPairsToastOverlay) {
+      hideNoPairsToastOverlay();
+    }
+    updateUI();
+  }
+
+  function handleCollect() {
+    clearWinToastTimer();
+    if (pendingWin > 0) {
+      balance += pendingWin;
+    }
+    pendingWin = 0;
+    if (winToastBackdrop) {
+      winToastBackdrop.classList.remove("visible");
+      winToastBackdrop.setAttribute("aria-hidden", "true");
+      winToastBackdrop.removeAttribute("aria-label");
+    }
+    resetSession();
+    requestAnimationFrame(function () {
+      openBetSheet();
+    });
+  }
+
+  function finalizeFailWithoutWinModal(winAmount, finalizeOpts) {
+    finalizeOpts = finalizeOpts || {};
+    hideCashoutCelebrationOverlay();
+    if (winAmount > 0) {
+      balance += winAmount;
+    }
+    pendingWin = 0;
+    const toastDismissMs = finalizeOpts.noPairsToastDismissAfterBetSheetMs;
+    const delayToastDismiss =
+      typeof toastDismissMs === "number" && toastDismissMs > 0;
+    resetSession(
+      delayToastDismiss ? { skipNoPairsToastOverlayHide: true } : undefined
+    );
+    requestAnimationFrame(function () {
+      openBetSheet();
+      if (delayToastDismiss) {
+        window.setTimeout(function () {
+          hideNoPairsToastOverlay();
+        }, toastDismissMs);
+      }
+    });
+  }
+
+  function playRound() {
+    if (isAnimating) return;
+    if (!sessionAlive) {
+      return;
+    }
+
+    let bet;
+    if (roundIndex === 0) {
+      bet = baseBetAmount;
+      if (bet > balance) {
+        return;
+      }
+      balance -= bet;
+      sessionBet = bet;
+    } else {
+      bet = sessionBet;
+    }
+
+    roundIndex += 1;
+    isAnimating = true;
+    updateUI();
+
+    const stage = getCurrentStage(totalCoeff);
+    const levels = currentGrid.slice();
+    const spawnMaskThisStep = new Array(9).fill(false);
+
+    let bonusAppearedThisRound = false;
+    let crashSpawnedThisRound = false;
+    for (let i = 0; i < 9; i++) {
+      if (crashSpawnedThisRound) {
+        continue;
+      }
+      if (levels[i] === 0) {
+        const tile = pickTileForEmptyCell(stage, levels, bonusTileAppeared, totalCoeff, roundIndex);
+
+        if (tile === TILE_BONUS) {
+          bonusTileAppeared = true;
+          bonusAppearedThisRound = true;
+        }
+        if (tile === TILE_CRASH) {
+          crashSpawnedThisRound = true;
+        }
+
+        levels[i] = tile;
+        spawnMaskThisStep[i] = true;
+      }
+    }
+
+    // Краш — поражение: ставка уже списана, выигрыш 0, баланс не пополняем.
+    if (levels.some(l => l === TILE_CRASH)) {
+      const { grid: fallen, spawnMask: spawnAfterFall } = applyGravityWithSpawnMask(
+        levels,
+        spawnMaskThisStep
+      );
+      currentGrid = fallen;
+      totalCoeff = 0;
+
+      const crashSpawnDelays = computeSpawnDelays(spawnAfterFall, currentGrid);
+      let crashFxStartDelayMs = 0;
+      for (let ci = 0; ci < 9; ci++) {
+        if (spawnAfterFall[ci] && currentGrid[ci] === TILE_CRASH) {
+          crashFxStartDelayMs = crashSpawnDelays[ci] || 0;
+          break;
+        }
+      }
+      updateUI(spawnAfterFall, crashSpawnDelays);
+      sessionAlive = false;
+      const finalWin = 0;
+      const CRASH_VIBRATE_MS = 130;
+      const CRASH_VIBRATE_OVERLAP_MS = 15;
+      window.setTimeout(() => {
+        const fieldShellEl = gridEl.closest(".field-shell");
+        crashOverlay.classList.add("visible");
+        applyNoPairsFailVisuals({
+          plateFadeMs: CRASH_BADGE_REVEAL_MS,
+          emblemOpacity: 0.2,
+        });
+        suppressEmblemGlowForCrash();
+        if (fieldShellEl) {
+          fieldShellEl.classList.remove("field-shell--crash-vibrate");
+          void fieldShellEl.offsetWidth;
+          fieldShellEl.classList.add("field-shell--crash-vibrate");
+        }
+
+        window.setTimeout(() => {
+          const CRASH_PRE_DESPAWN_DELAY_MS = 110;
+          const CRASH_GLOW_PHASE_DELAY_MS = 30;
+          window.setTimeout(() => {
+            window.setTimeout(() => {
+              crashOverlay.classList.remove("visible");
+              if (fieldShellEl) {
+                fieldShellEl.classList.remove("field-shell--crash-vibrate");
+              }
+              animateGridFailDespawn(() => {
+                const CRASH_TO_RESET_DELAY_MS = 25;
+                window.setTimeout(() => {
+                  currentGrid = new Array(9).fill(0);
+                  isAnimating = false;
+                  isStepLockedByBetStart = false;
+                  finalizeFailWithoutWinModal(finalWin);
+                }, CRASH_TO_RESET_DELAY_MS);
+              });
+            }, CRASH_GLOW_PHASE_DELAY_MS);
+          }, CRASH_PRE_DESPAWN_DELAY_MS);
+        }, Math.max(0, CRASH_VIBRATE_MS - CRASH_VIBRATE_OVERLAP_MS));
+      }, crashFxStartDelayMs);
+
+      return;
+    }
+
+    const { grid: fallen, spawnMask: spawnAfterFall } = applyGravityWithSpawnMask(
+      levels,
+      spawnMaskThisStep
+    );
+    currentGrid = fallen;
+    updateUI(spawnAfterFall);
+
+    setTimeout(() => {
+      const coeffBaseBeforeMergeStep = totalCoeff;
+      pendingMergeCoeffs = [];
+      if (pendingMergeCoeffLayer) {
+        pendingMergeCoeffLayer.replaceChildren();
+      }
+      processMergeChain(fallen, (finalGrid) => {
+        let merged = finalGrid;
+        currentGrid = merged;
+
+        /* Сетка уже пересобрана в processMergeChain (ветка без пар) + кэф обновлён таймаутом/fly — без второго innerHTML. */
+        updateUI(undefined, undefined, { skipGridRebuild: true });
+
+        if (isGridFullNoPairs(merged)) {
+          sessionAlive = false;
+          const finalWin = sessionBet * totalCoeff;
+          setTopToastTitle("Нет пар!");
+          setNoPairsToastWinAmount(finalWin);
+          runAfterMergeResolveSettled(() => {
+            /* Затемнение карточек чуть раньше бейджа */
+            window.setTimeout(() => {
+              clearTransientMergeVisualState();
+              applyNoPairsFailVisuals({ plateFadeMs: NO_PAIRS_DIMM_AHEAD_MS, emblemOpacity: 0.2, glowOpacity: 0 });
+            }, NO_PAIRS_BADGE_SHOW_DELAY_MS - NO_PAIRS_DIMM_AHEAD_MS);
+
+            window.setTimeout(() => {
+              if (noPairsOverlay) {
+                noPairsOverlay.classList.add("visible");
+              }
+              window.setTimeout(() => {
+                showNoPairsToastOverlay();
+              }, NO_PAIRS_TOAST_AFTER_BADGE_MS);
+              window.setTimeout(() => {
+                if (noPairsOverlay) {
+                  noPairsOverlay.classList.remove("visible");
+                }
+                window.setTimeout(() => {
+                  animateGridFailDespawn(() => {
+                    window.setTimeout(() => {
+                      currentGrid = new Array(9).fill(0);
+                      isAnimating = false;
+                      isStepLockedByBetStart = false;
+                      finalizeFailWithoutWinModal(finalWin, {
+                        noPairsToastDismissAfterBetSheetMs:
+                          NO_PAIRS_TOAST_DISMISS_AFTER_BET_SHEET_MS,
+                      });
+                    }, GRID_FAIL_TO_MODAL_DELAY_MS);
+                  });
+                }, NO_PAIRS_EMBLEMS_DESPAWN_AFTER_BADGE_HIDE_MS);
+              }, NO_PAIRS_BADGE_VISIBLE_MS);
+            }, NO_PAIRS_BADGE_SHOW_DELAY_MS);
+          });
+          return;
+        }
+
+        isAnimating = false;
+        isStepLockedByBetStart = false;
+        updateUI();
+      }, coeffBaseBeforeMergeStep);
+    }, 130);
+  }
+
+  function cashout() {
+    if (!sessionAlive || sessionBet <= 0 || totalCoeff <= 0 || isAnimating) {
+      return;
+    }
+    const coeffAtCashout = totalCoeff;
+    const cashoutAmount = sessionBet * totalCoeff;
+    sessionAlive = false;
+    isAnimating = false;
+    isStepLockedByBetStart = false;
+
+    if (coeffAtCashout >= CASHOUT_CELEBRATION_MIN_COEFF) {
+      showCashoutCelebrationOverlay(cashoutAmount, coeffAtCashout);
+      cashoutCelebrationTimer = window.setTimeout(function () {
+        cashoutCelebrationTimer = null;
+        hideCashoutCelebrationOverlay();
+        finalizeFailWithoutWinModal(cashoutAmount, {});
+      }, CASHOUT_CELEBRATION_DISPLAY_MS);
+    } else {
+      setTopToastTitle("Ваш выигрыш");
+      setNoPairsToastWinAmount(cashoutAmount);
+      showNoPairsToastOverlay();
+      const CASHOUT_TO_BET_SHEET_DELAY_MS = 85;
+      window.setTimeout(function () {
+        finalizeFailWithoutWinModal(cashoutAmount, {
+          noPairsToastDismissAfterBetSheetMs: 85,
+        });
+      }, CASHOUT_TO_BET_SHEET_DELAY_MS);
+    }
+    updateUI();
+  }
+
+  function getMaxBetForSheet() {
+    return Math.max(MIN_BET, Math.floor(balance));
+  }
+
+  function clampBetAmount(n) {
+    let v = Math.floor(Number(n));
+    if (!Number.isFinite(v) || v < MIN_BET) v = MIN_BET;
+    const cap = getMaxBetForSheet();
+    if (v > cap) v = cap;
+    return v;
+  }
+
+  function readBetFromSheetInput() {
+    const raw = String(betSheetInput.value).replace(/\D/g, "");
+    const n = parseInt(raw, 10);
+    return clampBetAmount(Number.isFinite(n) ? n : MIN_BET);
+  }
+
+  function applyBetToSheet(n) {
+    betSheetInput.value = String(clampBetAmount(n));
+  }
+
+  function markBetSheetSeenInStorage() {
+    try {
+      localStorage.setItem(BET_SHEET_STORAGE_KEY, "1");
+    } catch (e) {}
+  }
+
+  function openBetSheetForced() {
+    if (betSheetBackdrop.classList.contains("visible")) {
+      updateUI();
+      return;
+    }
+    betSheetBackdrop.style.left = "";
+    betSheetBackdrop.style.top = "";
+    betSheetBackdrop.style.width = "";
+    betSheetBackdrop.style.height = "";
+    betSheetInput.value = String(baseBetAmount);
+    betSheetBackdrop.classList.add("visible");
+    betSheetBackdrop.setAttribute("aria-hidden", "false");
+    updateUI();
+  }
+
+  function finishBetSheet(opts) {
+    if (!betSheetBackdrop.classList.contains("visible")) return;
+    const startRound = opts && opts.startRound;
+    baseBetAmount = readBetFromSheetInput();
+
+    if (startRound) {
+      isStepLockedByBetStart = true;
+      betSheetBackdrop.classList.remove("visible");
+      betSheetBackdrop.setAttribute("aria-hidden", "true");
+      updateUI();
+      const BET_SHEET_CLOSE_MS = 90;
+      window.setTimeout(() => {
+        const roundBefore = roundIndex;
+        const sessionBetBefore = sessionBet;
+        playRound();
+        const started =
+          roundIndex > roundBefore || sessionBet > sessionBetBefore;
+        if (started) {
+          markBetSheetSeenInStorage();
+        } else {
+          isStepLockedByBetStart = false;
+          openBetSheetForced();
+          updateUI();
+        }
+      }, BET_SHEET_CLOSE_MS);
+      return;
+    }
+
+    markBetSheetSeenInStorage();
+    betSheetBackdrop.classList.remove("visible");
+    betSheetBackdrop.setAttribute("aria-hidden", "true");
+    updateUI();
+  }
+
+  function openBetSheet() {
+    if (!stakeTapOpensBetSheet()) return;
+    openBetSheetForced();
+  }
+
+  /**
+   * Лист ставки при загрузке страницы. Не зависит от localStorage — иначе после прошлых
+   * заходов ключ mergeMvpBetSheetSeen блокировал показ. Модалку итога не открывает.
+   */
+  function openBetSheetAutoIfFirstRun() {
+    if (winToastBackdrop.classList.contains("visible")) return;
+    openBetSheetForced();
+  }
+
+  stepButton.addEventListener("click", playRound);
+  cashoutButton.addEventListener("click", cashout);
+
+  document.getElementById("betSheetPanel").addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+  betSheetMinus.addEventListener("click", function () {
+    applyBetToSheet(readBetFromSheetInput() - 1);
+  });
+  betSheetPlus.addEventListener("click", function () {
+    applyBetToSheet(readBetFromSheetInput() + 1);
+  });
+  document.getElementById("betSheetPresetMin").addEventListener("click", function () {
+    applyBetToSheet(MIN_BET);
+  });
+  document.getElementById("betSheetPresetHalf").addEventListener("click", function () {
+    applyBetToSheet(Math.floor(readBetFromSheetInput() / 2));
+  });
+  document.getElementById("betSheetPresetDouble").addEventListener("click", function () {
+    applyBetToSheet(readBetFromSheetInput() * 2);
+  });
+  document.getElementById("betSheetPresetMax").addEventListener("click", function () {
+    applyBetToSheet(getMaxBetForSheet());
+  });
+  betSheetConfirm.addEventListener("click", function () {
+    finishBetSheet({ startRound: true });
+  });
+  betSheetBackdrop.addEventListener("click", function (e) {
+    if (e.target === betSheetBackdrop) {
+      finishBetSheet();
+    }
+  });
+
+  coeffStakeBlock.addEventListener("click", function () {
+    openBetSheet();
+  });
+  coeffStakeBlock.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openBetSheet();
+    }
+  });
+
+  (function bootMergeAppAfterAssetWarm() {
+    const overlay = document.getElementById("assetPrecacheOverlay");
+    const startUi = function () {
+      requestAnimationFrame(function () {
+        updateUI();
+        openBetSheetAutoIfFirstRun();
+        scheduleLayoutIntegerSnap();
+      });
+    };
+
+    /* Оверлей показываем только при первом прогреве в сессии; на повторных загрузках (F5, SPA-переход)
+       оверлей скрыт, но UI всё равно стартует только после decode — иначе tileImageDecodeByUrl пуст
+       и preloadMergedAnchorFaceUrls конкурирует с фоновым прогревом → мерцание на WebKit. */
+    const needsOverlay = shouldShowBlockingAssetWarm();
+    fdbg.log("BOOT", "session=" + (needsOverlay ? "FIRST-LOAD (cold, overlay shown)" : "REFRESH (warm, no overlay)"));
+    if (needsOverlay) {
+      showAssetPrecacheOverlay();
+    } else if (overlay) {
+      overlay.remove();
+    }
+
+    const bootWarmT = performance.now();
+    precacheMergeGameAssets()
+      .then(function () {
+        fdbg.log("BOOT", "precacheMergeGameAssets done in " + (performance.now() - bootWarmT).toFixed(0) + "ms" +
+          (performance.now() - bootWarmT < 400 ? " (HTTP cache — fast)" : " (network — slow, first load)"));
+        return forceGpuTextureUpload();
+      })
+      .then(function () {
+        fdbg.log("BOOT", "startUi — total warmup " + (performance.now() - bootWarmT).toFixed(0) + "ms");
+        if (needsOverlay) {
+          markSessionAssetsWarmed();
+          hideAssetPrecacheOverlay();
+        }
+        startUi();
+      })
+      .catch(function () {
+        fdbg.warn("BOOT", "precache ERROR — starting UI anyway");
+        if (needsOverlay) {
+          hideAssetPrecacheOverlay();
+        }
+        startUi();
+      });
+  })();
+</script>
+</body>
+</html>
