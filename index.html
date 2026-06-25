@@ -231,21 +231,45 @@
       min-width: 0;
       flex-shrink: 0;
     }
+    .math-profile-dock {
+      position: fixed;
+      left: 50%;
+      bottom: max(10px, env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      background: rgba(16, 16, 22, 0.94);
+      border: 1px solid #343446;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55);
+      pointer-events: auto;
+      max-width: min(380px, calc(100vw - 24px));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
     .math-profile-switch {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 10px;
+      width: 100%;
     }
     .math-profile-btn {
-      padding: 2px 7px;
-      border: 1px solid #2e2e3a;
-      border-radius: 6px;
-      background: #14141c;
-      color: #8b8b9e;
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 8px 18px;
+      min-height: 40px;
+      border: 1px solid #3a3a48;
+      border-radius: 11px;
+      background: #181820;
+      color: #a6a6b8;
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 10px;
+      font-size: 21px;
       font-weight: 600;
-      line-height: 14px;
+      line-height: 24px;
       letter-spacing: 0.02em;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -1354,13 +1378,7 @@
   </div>
 
   <footer class="app-footer" role="contentinfo" aria-label="Нижняя панель">
-      <div class="app-footer-leading">
-        <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
-        <div class="math-profile-switch" role="group" aria-label="Вариант математики">
-          <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
-          <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
-        </div>
-      </div>
+      <img class="app-footer-logo" src="assets/logoframe.svg" width="144" height="16" alt="Логотип" />
       <div class="app-footer-stats">
         <div class="app-footer-stat" title="Ставки">
           <span class="app-footer-stat-icon" aria-hidden="true">
@@ -1444,6 +1462,13 @@
 </div>
 </div>
 
+<div class="math-profile-dock" role="group" aria-label="Вариант математики">
+  <div class="math-profile-switch">
+    <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
+    <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
+  </div>
+</div>
+
 <script src="assets/game-math.js"></script>
 <script src="assets/js/merge-flight.js?v=71"></script>
 <script>
@@ -1479,15 +1504,30 @@
   }
 
   function switchMathProfile(profileId) {
-    if (isAnimating) return;
+    if (window.MergeGameMath.getActiveProfileId() === profileId) return;
     if (!window.MergeGameMath.setActiveProfile(profileId)) return;
     bindMathApi(window.MergeGameMath);
     try {
       localStorage.setItem(MATH_PROFILE_STORAGE_KEY, profileId);
     } catch (e) {}
     updateMathProfileButtons(profileId);
+    if (betSheetBackdrop && betSheetBackdrop.classList.contains("visible")) {
+      betSheetBackdrop.classList.remove("visible");
+      betSheetBackdrop.setAttribute("aria-hidden", "true");
+    }
+    isStepLockedByBetStart = false;
     hideCashoutCelebrationOverlay();
+    hideNoPairsToastOverlay();
+    if (crashOverlay) crashOverlay.classList.remove("visible");
+    if (noPairsOverlay) noPairsOverlay.classList.remove("visible");
+    clearWinToastTimer();
+    if (winToastBackdrop) {
+      winToastBackdrop.classList.remove("visible");
+      winToastBackdrop.setAttribute("aria-hidden", "true");
+      winToastBackdrop.removeAttribute("aria-label");
+    }
     resetSession();
+    updateUI();
   }
 
   (function initMathProfile() {
