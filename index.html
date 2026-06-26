@@ -1589,8 +1589,27 @@
     };
   }
 
+  function persistWalletState() {
+    if (!window.MergeSessionHistory) return;
+    window.MergeSessionHistory.saveWallet({
+      balance: balance,
+      baseBetAmount: baseBetAmount,
+    });
+  }
+
+  function restoreWalletState() {
+    if (!window.MergeSessionHistory) return;
+    const saved = window.MergeSessionHistory.loadWallet();
+    if (!saved) return;
+    balance = saved.balance;
+    if (saved.baseBetAmount != null) {
+      baseBetAmount = saved.baseBetAmount;
+    }
+  }
+
   function persistActiveGameState(force) {
     if (!window.MergeSessionHistory) return;
+    persistWalletState();
     if (isAnimating && !force) return;
     const snap = buildActiveGameSnapshot();
     if (snap) {
@@ -1602,6 +1621,7 @@
 
   function restoreActiveGameState() {
     if (!window.MergeSessionHistory) return false;
+    restoreWalletState();
     const saved = window.MergeSessionHistory.loadActiveSession();
     if (!saved) return false;
 

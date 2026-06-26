@@ -7,6 +7,7 @@
   const HISTORY_KEY = "mergeMvpSessionHistory";
   const AGGREGATE_KEY = "mergeMvpSessionStats";
   const ACTIVE_SESSION_KEY = "mergeMvpActiveSession";
+  const WALLET_KEY = "mergeMvpWalletBalance";
   const MAX_SESSIONS = 200;
   const MILESTONES = [10, 50, 100];
 
@@ -214,6 +215,55 @@
     }
   }
 
+  function loadWallet() {
+    try {
+      const raw = global.localStorage.getItem(WALLET_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const balance = Number(parsed.balance);
+      const baseBetAmount = Number(parsed.baseBetAmount);
+      if (!Number.isFinite(balance)) return null;
+      return {
+        balance: balance,
+        baseBetAmount:
+          Number.isFinite(baseBetAmount) && baseBetAmount > 0
+            ? baseBetAmount
+            : null,
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveWallet(data) {
+    if (!data) return;
+    const balance = Number(data.balance);
+    if (!Number.isFinite(balance)) return;
+    const baseBetAmount = Number(data.baseBetAmount);
+    try {
+      global.localStorage.setItem(
+        WALLET_KEY,
+        JSON.stringify({
+          balance: balance,
+          baseBetAmount:
+            Number.isFinite(baseBetAmount) && baseBetAmount > 0
+              ? baseBetAmount
+              : 10,
+        })
+      );
+    } catch (e) {
+      void e;
+    }
+  }
+
+  function clearWallet() {
+    try {
+      global.localStorage.removeItem(WALLET_KEY);
+    } catch (e) {
+      void e;
+    }
+  }
+
   function clearActiveSession() {
     try {
       global.localStorage.removeItem(ACTIVE_SESSION_KEY);
@@ -227,6 +277,7 @@
       global.localStorage.removeItem(HISTORY_KEY);
       global.localStorage.removeItem(AGGREGATE_KEY);
       global.localStorage.removeItem(ACTIVE_SESSION_KEY);
+      global.localStorage.removeItem(WALLET_KEY);
     } catch (e) {
       void e;
     }
@@ -240,6 +291,9 @@
     loadActiveSession: loadActiveSession,
     saveActiveSession: saveActiveSession,
     clearActiveSession: clearActiveSession,
+    loadWallet: loadWallet,
+    saveWallet: saveWallet,
+    clearWallet: clearWallet,
     clearAll: clearAll,
   };
 })(typeof window !== "undefined" ? window : globalThis);
