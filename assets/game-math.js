@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Math2 / Math3 — переключение через setActiveProfile().
+ * Профили Math2 / Math3 / Math4 — переключение через setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -80,7 +80,11 @@
     function pickTileForEmptyCell(stage, existingLevels, bonusAlreadyAppeared, totalCoeff, roundNumber) {
       const round = typeof roundNumber === "number" ? roundNumber : 99;
       let bonusProb = config.computeBonusProb(round, bonusAlreadyAppeared);
-      let bombProb = config.computeBombProb(totalCoeff, round);
+      let bombProb = config.computeBombProb(
+        totalCoeff,
+        round,
+        bonusAlreadyAppeared
+      );
 
       const r = Math.random();
       if (r < bonusProb) return TILE_BONUS;
@@ -205,6 +209,33 @@
     },
   });
 
+  const MATH4 = createMathProfile({
+    id: "math4",
+    label: "Math4",
+    c1: 0.02798,
+    g: 1.22661,
+    stageThresholds: [0.17750, 0.49775, 1.70775],
+    alphaStages: [0.70028, 0.18708, 0.73031, 0.13306],
+    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
+    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
+    computeBombProb: function (totalCoeff, roundNumber, bonusAlreadyAppeared) {
+      const BOMB_P = 0.09128;
+      if (totalCoeff < 0.8) {
+        let prob = BOMB_P * 0.093;
+        if (bonusAlreadyAppeared) prob *= 10;
+        if (roundNumber === 1) prob *= 0.1;
+        return prob;
+      }
+      return BOMB_P;
+    },
+    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
+      let prob = 0.00478;
+      if (roundNumber <= 2) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 0.1;
+      return prob;
+    },
+  });
+
   function applyGravityWithSpawnMask(levels, spawnMask) {
     const mask = spawnMask || new Array(9).fill(false);
     const res = new Array(9).fill(0);
@@ -307,6 +338,7 @@
   const profiles = {
     math2: MATH2,
     math3: MATH3,
+    math4: MATH4,
   };
 
   let activeProfileId = "math3";

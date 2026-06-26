@@ -706,6 +706,12 @@
       return n + " игр";
     }
 
+    function formatProfileLabel(profile) {
+      if (profile === "math2") return "Math2";
+      if (profile === "math4") return "Math4";
+      return "Math3";
+    }
+
     function coeffToneClass(value) {
       const n = Number(value);
       if (!Number.isFinite(n)) return "coeff-tone-mid";
@@ -885,7 +891,7 @@
               "x" + session.finalCoeff.toFixed(2),
               coeffToneClass(session.finalCoeff),
             ],
-            ["Профиль", session.profile === "math2" ? "Math2" : "Math3"],
+            ["Профиль", formatProfileLabel(session.profile)],
           ]
         : [
             ["Баланс до", formatMoney(session.balanceBefore)],
@@ -903,7 +909,7 @@
               "x" + session.finalCoeff.toFixed(2),
               coeffToneClass(session.finalCoeff),
             ],
-            ["Профиль", session.profile === "math2" ? "Math2" : "Math3"],
+            ["Профиль", formatProfileLabel(session.profile)],
           ];
       rows.forEach(function (row) {
         const label = document.createElement("span");

@@ -815,10 +815,21 @@
       margin: 0 0 12px;
       padding: 0;
     }
+    .bet-sheet-simulate-row {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .bet-sheet-simulate-row:last-of-type {
+      margin-bottom: 16px;
+    }
     .bet-sheet-simulate {
       display: block;
-      width: 100%;
-      margin: 0 0 16px;
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0;
       padding: 10px 12px;
       border: 1px solid #2e2e3a;
       border-radius: 12px;
@@ -841,10 +852,73 @@
       cursor: default;
     }
     .bet-sheet-simulate--pasha {
-      margin-top: 8px;
       border-color: #3a3428;
       background: rgba(251, 191, 36, 0.08);
       color: #fbbf24;
+    }
+    .bet-sheet-simulate-info {
+      flex-shrink: 0;
+      width: 40px;
+      padding: 0;
+      border: 1px solid #2e2e3a;
+      border-radius: 12px;
+      background: #1a1a23;
+      color: #8b8b9e;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bet-sheet-simulate-info:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+    }
+    .bet-sheet-simulate-info:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    .bet-sheet-simulate-row--pasha .bet-sheet-simulate-info {
+      border-color: #3a3428;
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.06);
+    }
+    .bet-sheet-sim-tooltip {
+      position: fixed;
+      z-index: 2147483647;
+      max-width: min(280px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #2e2e3a;
+      background: #1e1e28;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.45;
+      color: #b8b8c8;
+      white-space: pre-line;
+      pointer-events: none;
+    }
+    .bet-sheet-sim-tooltip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      right: 14px;
+      border: 5px solid transparent;
+      border-top-color: #2e2e3a;
+    }
+    .bet-sheet-sim-tooltip::before {
+      content: "";
+      position: absolute;
+      top: 100%;
+      right: 15px;
+      border: 4px solid transparent;
+      border-top-color: #1e1e28;
+    }
+    .bet-sheet-sim-tooltip[hidden] {
+      display: none;
     }
     .bet-sheet-stepper {
       display: flex;
@@ -1494,14 +1568,35 @@
   </footer>
 
   <div class="bet-sheet-backdrop" id="betSheetBackdrop" aria-hidden="true">
+    <div class="bet-sheet-sim-tooltip" id="betSheetSimTooltip" role="tooltip" hidden></div>
     <div class="bet-sheet" id="betSheetPanel" role="dialog" aria-labelledby="betSheetTitle" aria-modal="true">
       <h2 class="bet-sheet-title" id="betSheetTitle">Сумма ставки</h2>
-      <button type="button" class="bet-sheet-simulate" id="betSheetSimulate50">
-        Сыграть 50 сессий
-      </button>
-      <button type="button" class="bet-sheet-simulate bet-sheet-simulate--pasha" id="betSheetSimulatePasha">
-        50 игр Паша
-      </button>
+      <div class="bet-sheet-simulate-row">
+        <button type="button" class="bet-sheet-simulate" id="betSheetSimulate50">
+          <span class="bet-sheet-simulate-label">50 рандомных сессий</span>
+        </button>
+        <button
+          type="button"
+          class="bet-sheet-simulate-info"
+          id="betSheetSimulate50Info"
+          aria-label="Описание: 50 рандомных сессий"
+        >
+          i
+        </button>
+      </div>
+      <div class="bet-sheet-simulate-row bet-sheet-simulate-row--pasha">
+        <button type="button" class="bet-sheet-simulate bet-sheet-simulate--pasha" id="betSheetSimulatePasha">
+          <span class="bet-sheet-simulate-label">Стратегия Паши</span>
+        </button>
+        <button
+          type="button"
+          class="bet-sheet-simulate-info"
+          id="betSheetSimulatePashaInfo"
+          aria-label="Описание: Стратегия Паши"
+        >
+          i
+        </button>
+      </div>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1563,6 +1658,7 @@
     <div class="math-profile-switch" role="group" aria-label="Вариант математики">
       <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
       <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
+      <button type="button" class="math-profile-btn" id="mathProfileMath4" data-profile="math4" aria-pressed="false">Math4</button>
     </div>
   </div>
 </div>
@@ -1767,9 +1863,33 @@
   const PASHA_WIN_RESET = 250;
   const PASHA_CASHOUT_COEFF = 2;
   const BULK_SIM_BTN_LABELS = {
-    betSheetSimulate50: "Сыграть 50 сессий",
-    betSheetSimulatePasha: "50 игр Паша",
+    betSheetSimulate50: "50 рандомных сессий",
+    betSheetSimulatePasha: "Стратегия Паши",
   };
+  const BULK_SIM_INFO = {
+    random: {
+      title: "50 рандомных сессий",
+      text:
+        "Быстро прогоняет 50 игр по выбранной математике (Math2/Math3/Math4).\n\n" +
+        "В каждой сессии ставка случайная — от MIN до текущего баланса. " +
+        "Исход решается наугад: кэшаут, бомба или «нет пар».\n\n" +
+        "Все результаты сохраняются в статистику.",
+    },
+    pasha: {
+      title: "Стратегия Паши",
+      text:
+        "50 сессий по выбранной математике (Math2/Math3/Math4) и фиксированным правилам:\n\n" +
+        "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
+        "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
+        "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.",
+    },
+  };
+
+  function getBulkSimLabelEl(btnId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return null;
+    return btn.querySelector(".bet-sheet-simulate-label") || btn;
+  }
 
   function setBulkSimButtonsDisabled(disabled) {
     Object.keys(BULK_SIM_BTN_LABELS).forEach(function (id) {
@@ -1777,16 +1897,64 @@
       if (!btn) return;
       btn.disabled = disabled;
       if (!disabled) {
-        btn.textContent = BULK_SIM_BTN_LABELS[id];
+        const label = getBulkSimLabelEl(id);
+        if (label) label.textContent = BULK_SIM_BTN_LABELS[id];
       }
     });
+    document.querySelectorAll(".bet-sheet-simulate-info").forEach(function (btn) {
+      btn.disabled = disabled;
+    });
+    if (disabled) hideBetSheetSimTooltip();
   }
 
   function setBulkSimProgress(activeBtnId, current, total) {
-    const btn = document.getElementById(activeBtnId);
-    if (btn) {
-      btn.textContent = "Играем… " + current + "/" + total;
+    const label = getBulkSimLabelEl(activeBtnId);
+    if (label) {
+      label.textContent = "Играем… " + current + "/" + total;
     }
+  }
+
+  let activeBetSheetSimInfoBtn = null;
+
+  function hideBetSheetSimTooltip() {
+    const tooltip = document.getElementById("betSheetSimTooltip");
+    if (!tooltip) return;
+    tooltip.hidden = true;
+    tooltip.textContent = "";
+    activeBetSheetSimInfoBtn = null;
+  }
+
+  function positionBetSheetSimTooltip(anchorBtn) {
+    const tooltip = document.getElementById("betSheetSimTooltip");
+    if (!tooltip || tooltip.hidden || !anchorBtn) return;
+    const rect = anchorBtn.getBoundingClientRect();
+    const gap = 8;
+    const tw = tooltip.offsetWidth;
+    const th = tooltip.offsetHeight;
+    let left = rect.right - tw;
+    let top = rect.top - th - gap;
+    const pad = 12;
+    left = Math.max(pad, Math.min(left, window.innerWidth - tw - pad));
+    top = Math.max(pad, top);
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+  }
+
+  function toggleBetSheetSimTooltip(btn, kind) {
+    const info = BULK_SIM_INFO[kind];
+    const tooltip = document.getElementById("betSheetSimTooltip");
+    if (!info || !tooltip || !btn) return;
+
+    if (!tooltip.hidden && activeBetSheetSimInfoBtn === btn) {
+      hideBetSheetSimTooltip();
+      return;
+    }
+
+    hideBetSheetSimTooltip();
+    tooltip.textContent = info.text;
+    tooltip.hidden = false;
+    activeBetSheetSimInfoBtn = btn;
+    positionBetSheetSimTooltip(btn);
   }
 
   function simulateOneSessionFast(startBalance, bet, opts) {
@@ -2050,7 +2218,7 @@
     let saved = "math3";
     try {
       const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
-      if (stored === "math2" || stored === "math3") saved = stored;
+      if (stored === "math2" || stored === "math3" || stored === "math4") saved = stored;
     } catch (e) {}
     window.MergeGameMath.setActiveProfile(saved);
     bindMathApi(window.MergeGameMath);
@@ -3985,6 +4153,7 @@
 
   function finishBetSheet(opts) {
     if (!betSheetBackdrop.classList.contains("visible")) return;
+    hideBetSheetSimTooltip();
     const startRound = opts && opts.startRound;
     baseBetAmount = readBetFromSheetInput();
 
@@ -4038,6 +4207,9 @@
   document.getElementById("mathProfileMath2").addEventListener("click", function () {
     switchMathProfile("math2");
   });
+  document.getElementById("mathProfileMath4").addEventListener("click", function () {
+    switchMathProfile("math4");
+  });
   if (settingsButton) {
     settingsButton.addEventListener("click", function () {
       persistActiveGameState(true);
@@ -4080,6 +4252,25 @@
   document.getElementById("betSheetSimulatePasha").addEventListener("click", function () {
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkPashaSessions(50);
+  });
+  document.getElementById("betSheetSimulate50Info").addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleBetSheetSimTooltip(this, "random");
+  });
+  document.getElementById("betSheetSimulatePashaInfo").addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleBetSheetSimTooltip(this, "pasha");
+  });
+  document.addEventListener("click", function (e) {
+    const tooltip = document.getElementById("betSheetSimTooltip");
+    if (!tooltip || tooltip.hidden) return;
+    if (e.target.closest(".bet-sheet-simulate-info")) return;
+    hideBetSheetSimTooltip();
+  });
+  window.addEventListener("resize", function () {
+    if (activeBetSheetSimInfoBtn) {
+      positionBetSheetSimTooltip(activeBetSheetSimInfoBtn);
+    }
   });
   betSheetBackdrop.addEventListener("click", function (e) {
     if (e.target === betSheetBackdrop) {
