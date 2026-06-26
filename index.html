@@ -139,6 +139,23 @@
       max-width: 40px;
       object-fit: contain;
     }
+    .app-subheader-action--stats {
+      width: auto;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid #2e2e3a;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #c8c8d8;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .app-subheader-action--stats:active {
+      background: rgba(255, 255, 255, 0.1);
+    }
     .app-subheader-balance {
       margin-left: 8px;
       min-width: 0;
@@ -1341,8 +1358,8 @@
       <button type="button" class="app-subheader-action" aria-label="Справка">
         <img src="assets/subheader-info.svg" width="34" height="32" alt="" decoding="async" />
       </button>
-      <button type="button" class="app-subheader-action" aria-label="Настройки">
-        <img src="assets/subheader-settings.svg" width="32" height="32" alt="" decoding="async" />
+      <button type="button" class="app-subheader-action app-subheader-action--stats" id="settingsButton" aria-label="Статистика">
+        Статистика
       </button>
     </div>
   </div>
@@ -1515,6 +1532,7 @@
 </div>
 
 <script src="assets/game-math.js"></script>
+<script src="assets/session-history.js"></script>
 <script src="assets/js/merge-flight.js?v=71"></script>
 <script>
   let MAX_LEVEL, MIN_BET, TILE_CRASH, TILE_BONUS, BONUS_TILE_COEFF, COEFF_BY_LEVEL;
@@ -1522,6 +1540,122 @@
   let isGridFullNoPairs, findPairs, coeffGainLabelForMerge, mergeLevelsFromPairs;
 
   const MATH_PROFILE_STORAGE_KEY = "mergeMvpMathProfile";
+
+  let currentSessionLog = null;
+
+  function beginSessionLog(bet, balanceAfterBet) {
+    currentSessionLog = {
+      balanceBefore: balanceAfterBet + bet,
+      bet: bet,
+      stepCoeffs: [],
+      profile: window.MergeGameMath.getActiveProfileId(),
+    };
+  }
+
+  function appendSessionStepCoeff(round, coeff, opts) {
+    if (!currentSessionLog) return;
+    const entry = {
+      round: round,
+      coeff: Math.round(coeff * 100) / 100,
+    };
+    if (opts && opts.crash) entry.crash = true;
+    currentSessionLog.stepCoeffs.push(entry);
+  }
+
+  function clearSessionLog() {
+    currentSessionLog = null;
+  }
+
+  function buildActiveGameSnapshot() {
+    if (!(sessionBet > 0)) return null;
+    return {
+      balance: balance,
+      totalCoeff: totalCoeff,
+      roundIndex: roundIndex,
+      currentGrid: currentGrid.slice(),
+      sessionAlive: sessionAlive,
+      sessionBet: sessionBet,
+      bonusTileAppeared: bonusTileAppeared,
+      baseBetAmount: baseBetAmount,
+      sessionLog: currentSessionLog
+        ? {
+            balanceBefore: currentSessionLog.balanceBefore,
+            bet: currentSessionLog.bet,
+            stepCoeffs: currentSessionLog.stepCoeffs.slice(),
+            profile: currentSessionLog.profile,
+          }
+        : null,
+      savedAt: Date.now(),
+    };
+  }
+
+  function persistActiveGameState(force) {
+    if (!window.MergeSessionHistory) return;
+    if (isAnimating && !force) return;
+    const snap = buildActiveGameSnapshot();
+    if (snap) {
+      window.MergeSessionHistory.saveActiveSession(snap);
+    } else {
+      window.MergeSessionHistory.clearActiveSession();
+    }
+  }
+
+  function restoreActiveGameState() {
+    if (!window.MergeSessionHistory) return false;
+    const saved = window.MergeSessionHistory.loadActiveSession();
+    if (!saved) return false;
+
+    balance = saved.balance;
+    totalCoeff = saved.totalCoeff;
+    roundIndex = saved.roundIndex;
+    currentGrid = saved.currentGrid.slice();
+    sessionAlive = saved.sessionAlive !== false;
+    sessionBet = saved.sessionBet;
+    bonusTileAppeared = !!saved.bonusTileAppeared;
+    baseBetAmount = saved.baseBetAmount || saved.sessionBet;
+    if (saved.sessionLog) {
+      currentSessionLog = {
+        balanceBefore: saved.sessionLog.balanceBefore,
+        bet: saved.sessionLog.bet,
+        stepCoeffs: saved.sessionLog.stepCoeffs.slice(),
+        profile: saved.sessionLog.profile,
+      };
+    } else {
+      currentSessionLog = null;
+    }
+    isAnimating = false;
+    pendingWin = 0;
+    isStepLockedByBetStart = false;
+    return true;
+  }
+
+  function recordCompletedSession(snapshot) {
+    if (!snapshot || !(snapshot.bet > 0)) return;
+    const record = {
+      balanceBefore:
+        currentSessionLog && currentSessionLog.balanceBefore > 0
+          ? currentSessionLog.balanceBefore
+          : snapshot.balanceBefore,
+      balanceEnd: snapshot.balanceEnd,
+      bet: snapshot.bet,
+      win: Math.max(0, snapshot.win || 0),
+      finalCoeff: Math.max(0, snapshot.coeff || 0),
+      outcome: snapshot.outcome || "unknown",
+      profile:
+        snapshot.profile ||
+        (currentSessionLog && currentSessionLog.profile) ||
+        window.MergeGameMath.getActiveProfileId(),
+      stepCoeffs:
+        currentSessionLog && currentSessionLog.stepCoeffs
+          ? currentSessionLog.stepCoeffs.slice()
+          : snapshot.stepCoeffs || [],
+    };
+    if (window.MergeSessionHistory) {
+      window.MergeSessionHistory.recordSession(record);
+      window.MergeSessionHistory.clearActiveSession();
+    }
+    clearSessionLog();
+  }
 
   function bindMathApi(m) {
     MAX_LEVEL = m.MAX_LEVEL;
@@ -2710,6 +2844,7 @@
   const betSheetConfirm = document.getElementById("betSheetConfirm");
   const coeffStakeBlock = document.getElementById("coeffStakeBlock");
   const subheaderBalance = document.getElementById("subheaderBalance");
+  const settingsButton = document.getElementById("settingsButton");
   const cashoutCelebrationOverlay = document.getElementById("cashoutCelebrationOverlay");
   const cashoutCelebrationAmount = document.getElementById("cashoutCelebrationAmount");
   const cashoutCelebrationCoeff = document.getElementById("cashoutCelebrationCoeff");
@@ -3069,6 +3204,7 @@
 
     if (skipGridRebuild) {
       updateFooterChrome();
+      persistActiveGameState();
       return;
     }
 
@@ -3086,6 +3222,7 @@
     });
 
     updateFooterChrome();
+    persistActiveGameState();
     /* Двойной rAF: стабильная геометрия после innerHTML. Ширину .page-stack не трогаем здесь —
        при каждом GO иначе на проде дрожит inline-width (субпиксель / адресная строка) и пересчитывается
        вся сетка как после «пересборки». См. scheduleLayoutIntegerSnap на resize/load. */
@@ -3147,6 +3284,9 @@
     if (!opts.skipNoPairsToastOverlayHide && noPairsToastOverlay) {
       hideNoPairsToastOverlay();
     }
+    if (window.MergeSessionHistory) {
+      window.MergeSessionHistory.clearActiveSession();
+    }
     updateUI();
   }
 
@@ -3169,6 +3309,27 @@
 
   function finalizeFailWithoutWinModal(winAmount, finalizeOpts) {
     finalizeOpts = finalizeOpts || {};
+    const balanceEnd = balance + Math.max(0, winAmount || 0);
+    if (!finalizeOpts.skipSessionRecord) {
+      const snap = finalizeOpts.sessionSnapshot;
+      if (snap && snap.bet > 0) {
+        recordCompletedSession(
+          Object.assign({}, snap, { balanceEnd: balanceEnd })
+        );
+      } else if (sessionBet > 0) {
+        recordCompletedSession({
+          bet: sessionBet,
+          win: winAmount,
+          coeff: totalCoeff,
+          rounds: roundIndex,
+          balanceEnd: balanceEnd,
+          outcome:
+            finalizeOpts.outcome ||
+            (winAmount > 0 ? "no_pairs" : "crash"),
+          profile: window.MergeGameMath.getActiveProfileId(),
+        });
+      }
+    }
     hideCashoutCelebrationOverlay();
     if (winAmount > 0) {
       balance += winAmount;
@@ -3204,6 +3365,7 @@
       }
       balance -= bet;
       sessionBet = bet;
+      beginSessionLog(bet, balance);
     } else {
       bet = sessionBet;
     }
@@ -3246,6 +3408,7 @@
         spawnMaskThisStep
       );
       currentGrid = fallen;
+      const coeffAtCrash = totalCoeff;
       totalCoeff = 0;
 
       const crashSpawnDelays = computeSpawnDelays(spawnAfterFall, currentGrid);
@@ -3290,7 +3453,21 @@
                   currentGrid = new Array(9).fill(0);
                   isAnimating = false;
                   isStepLockedByBetStart = false;
-                  finalizeFailWithoutWinModal(finalWin);
+                  if (roundIndex > 0) {
+                    appendSessionStepCoeff(roundIndex, coeffAtCrash, { crash: true });
+                  }
+                  finalizeFailWithoutWinModal(finalWin, {
+                    outcome: "crash",
+                    sessionSnapshot: {
+                      bet: sessionBet,
+                      win: 0,
+                      coeff: coeffAtCrash,
+                      rounds: roundIndex,
+                      balanceEnd: balance,
+                      outcome: "crash",
+                      profile: window.MergeGameMath.getActiveProfileId(),
+                    },
+                  });
                 }, CRASH_TO_RESET_DELAY_MS);
               });
             }, CRASH_GLOW_PHASE_DELAY_MS);
@@ -3319,6 +3496,8 @@
 
         /* Сетка уже пересобрана в processMergeChain (ветка без пар) + кэф обновлён таймаутом/fly — без второго innerHTML. */
         updateUI(undefined, undefined, { skipGridRebuild: true });
+
+        appendSessionStepCoeff(roundIndex, totalCoeff);
 
         if (isGridFullNoPairs(merged)) {
           sessionAlive = false;
@@ -3352,6 +3531,7 @@
                       finalizeFailWithoutWinModal(finalWin, {
                         noPairsToastDismissAfterBetSheetMs:
                           NO_PAIRS_TOAST_DISMISS_AFTER_BET_SHEET_MS,
+                        outcome: "no_pairs",
                       });
                     }, GRID_FAIL_TO_MODAL_DELAY_MS);
                   });
@@ -3384,7 +3564,7 @@
       cashoutCelebrationTimer = window.setTimeout(function () {
         cashoutCelebrationTimer = null;
         hideCashoutCelebrationOverlay();
-        finalizeFailWithoutWinModal(cashoutAmount, {});
+        finalizeFailWithoutWinModal(cashoutAmount, { outcome: "cashout" });
       }, CASHOUT_CELEBRATION_DISPLAY_MS);
     } else {
       setTopToastTitle("Ваш выигрыш");
@@ -3394,6 +3574,7 @@
       window.setTimeout(function () {
         finalizeFailWithoutWinModal(cashoutAmount, {
           noPairsToastDismissAfterBetSheetMs: 85,
+          outcome: "cashout",
         });
       }, CASHOUT_TO_BET_SHEET_DELAY_MS);
     }
@@ -3498,6 +3679,15 @@
   document.getElementById("mathProfileMath2").addEventListener("click", function () {
     switchMathProfile("math2");
   });
+  if (settingsButton) {
+    settingsButton.addEventListener("click", function () {
+      persistActiveGameState(true);
+      window.location.href = "stats.html";
+    });
+  }
+  window.addEventListener("pagehide", function () {
+    persistActiveGameState(true);
+  });
   cashoutButton.addEventListener("click", cashout);
 
   document.getElementById("betSheetPanel").addEventListener("click", function (e) {
@@ -3543,9 +3733,12 @@
   (function bootMergeAppAfterAssetWarm() {
     const overlay = document.getElementById("assetPrecacheOverlay");
     const startUi = function () {
+      const hadActiveSession = restoreActiveGameState();
       requestAnimationFrame(function () {
         updateUI();
-        openBetSheetAutoIfFirstRun();
+        if (!hadActiveSession) {
+          openBetSheetAutoIfFirstRun();
+        }
         scheduleLayoutIntegerSnap();
       });
     };

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#131317" />
+  <meta name="color-scheme" content="dark" />
+  <title>Статистика — MergeMoney</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #131317;
+      color: #dfdfea;
+      font-family: "Inter", system-ui, sans-serif;
+    }
+    .stats-page {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .stats-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stats-back {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border: 1px solid #2e2e3a;
+      border-radius: 10px;
+      background: #1a1a23;
+      color: #a8b0c8;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .stats-back:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+    }
+    .stats-title {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #f0f0f8;
+    }
+    .stats-reset {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border: 1px solid #3a2a2a;
+      border-radius: 8px;
+      background: rgba(248, 113, 113, 0.08);
+      color: #f87171;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .stats-reset:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+    }
+    .stats-reset:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .balance-chart-panel {
+      margin-bottom: 20px;
+      border-radius: 14px;
+      border: 1px solid #2e2e3a;
+      background: linear-gradient(180deg, #1e1e28 0%, #14141c 100%);
+      overflow: hidden;
+    }
+    .balance-chart-panel[hidden] {
+      display: none;
+    }
+    .balance-chart-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+      padding: 11px 12px;
+      border: none;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .balance-chart-toggle:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: -2px;
+    }
+    .balance-chart-toggle-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f0f0f8;
+      line-height: 1.2;
+    }
+    .balance-chart-toggle-meta {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b8b9e;
+      font-variant-numeric: tabular-nums;
+    }
+    .balance-chart-chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8b8b9e;
+      font-size: 11px;
+      transition: transform 0.18s ease;
+    }
+    .balance-chart-panel--expanded .balance-chart-chevron {
+      transform: rotate(180deg);
+    }
+    .balance-chart-body {
+      border-top: 1px solid #242431;
+      padding: 10px 12px 12px;
+    }
+    .balance-chart-body[hidden] {
+      display: none;
+    }
+    .balance-chart-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .balance-chart-axis-label {
+      font-size: 9px;
+      font-weight: 500;
+      fill: #6b6b7e;
+      font-family: "Inter", system-ui, sans-serif;
+    }
+    .balance-chart-grid-line {
+      stroke: #2a2a38;
+      stroke-width: 1;
+    }
+    .balance-chart-line {
+      fill: none;
+      stroke: #24f49d;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .balance-chart-dot {
+      fill: #24f49d;
+    }
+    .balance-chart-dot--active {
+      fill: #4ec7fb;
+      stroke: #131317;
+      stroke-width: 1.5;
+    }
+    .stats-summary-item {
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 1px solid #2e2e3a;
+      background: #1a1a23;
+      text-align: center;
+    }
+    .stats-summary-label {
+      display: block;
+      font-size: 10px;
+      font-weight: 500;
+      color: #8b8b9e;
+      margin-bottom: 4px;
+    }
+    .stats-summary-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #24f49d;
+    }
+    .stats-summary-value--cashout {
+      color: #24f49d;
+    }
+    .stats-summary-value--bomb {
+      color: #f87171;
+    }
+    .stats-summary-value--no-pairs {
+      color: #4ec7fb;
+    }
+    .stats-summary-value--steps {
+      color: #dfdfea;
+    }
+    .stats-empty {
+      padding: 40px 16px;
+      text-align: center;
+      color: #8b8b9e;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .stats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .session-card {
+      border-radius: 14px;
+      border: 1px solid #2e2e3a;
+      background: linear-gradient(180deg, #1e1e28 0%, #14141c 100%);
+      overflow: hidden;
+    }
+    .session-card--active {
+      border-color: #3a4a5a;
+      box-shadow: 0 0 0 1px rgba(78, 199, 251, 0.12);
+    }
+    .session-card-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+      padding: 11px 12px;
+      border: none;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .session-card-toggle:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: -2px;
+    }
+    .session-card-toggle-main {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .session-card-num {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f0f0f8;
+      line-height: 1.2;
+    }
+    .session-card-summary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .session-card-outcome {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .session-card-outcome--cashout {
+      color: #24f49d;
+      background: rgba(36, 244, 157, 0.12);
+    }
+    .session-card-outcome--no_pairs {
+      color: #4ec7fb;
+      background: rgba(78, 199, 251, 0.12);
+    }
+    .session-card-outcome--crash {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.12);
+    }
+    .session-card-outcome--active {
+      color: #4ec7fb;
+      background: rgba(78, 199, 251, 0.12);
+    }
+    .session-card-quick {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #1a1a23;
+      border: 1px solid #2e2e3a;
+      color: #c8c8d8;
+      white-space: nowrap;
+    }
+    .coeff-tone-low {
+      color: #6d9a82;
+    }
+    .coeff-tone-mid {
+      color: #24f49d;
+    }
+    .coeff-tone-high {
+      color: #fbbf24;
+    }
+    .session-card-quick--win {
+      color: #24f49d;
+    }
+    .session-card-quick--win-zero {
+      color: #8b8b9e;
+    }
+    .session-card-quick--steps {
+      color: #a8b0c8;
+    }
+    .session-card-chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8b8b9e;
+      font-size: 11px;
+      transition: transform 0.18s ease;
+    }
+    .session-card--expanded .session-card-chevron {
+      transform: rotate(180deg);
+    }
+    .session-card-body {
+      border-top: 1px solid #242431;
+    }
+    .session-card-body[hidden] {
+      display: none;
+    }
+    .session-card-head {
+      display: none;
+    }
+    .session-card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      padding: 12px 14px;
+    }
+    .session-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #8b8b9e;
+    }
+    .session-card-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #dfdfea;
+      text-align: right;
+    }
+    .session-card-value--win {
+      color: #24f49d;
+    }
+    .session-card-value--loss {
+      color: #f87171;
+    }
+    .session-steps {
+      padding: 0 14px 12px;
+    }
+    .session-steps-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b8b9e;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .session-steps-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .session-step-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: #1a1a23;
+      border: 1px solid #2e2e3a;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .session-step-round {
+      color: #8b8b9e;
+      font-weight: 500;
+    }
+    .session-step-coeff {
+      font-weight: 600;
+    }
+    .session-step-coeff--crash {
+      color: #f87171;
+    }
+    .session-step-chip--crash {
+      border-color: rgba(248, 113, 113, 0.4);
+      background: rgba(248, 113, 113, 0.1);
+    }
+    .session-card-meta {
+      padding: 0 14px 10px;
+      font-size: 10px;
+      color: #5c5c6e;
+    }
+  </style>
+</head>
+<body>
+  <div class="stats-page">
+    <header class="stats-header">
+      <button type="button" class="stats-back" id="statsBackBtn" aria-label="Назад к игре">←</button>
+      <h1 class="stats-title">Статистика сессий</h1>
+      <button type="button" class="stats-reset" id="statsResetBtn">Сбросить</button>
+    </header>
+
+    <div class="stats-summary" id="statsSummary" hidden>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Игр</span>
+        <span class="stats-summary-value" id="summaryTotal">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Кэшаут</span>
+        <span class="stats-summary-value stats-summary-value--cashout" id="summaryCashouts">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Бомба</span>
+        <span class="stats-summary-value stats-summary-value--bomb" id="summaryBombs">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Нет пар</span>
+        <span class="stats-summary-value stats-summary-value--no-pairs" id="summaryNoPairs">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Средний x</span>
+        <span class="stats-summary-value" id="summaryAvgCoeff">x0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Средний шаг</span>
+        <span class="stats-summary-value stats-summary-value--steps" id="summaryAvgSteps">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Итог</span>
+        <span class="stats-summary-value" id="summaryNet">$0</span>
+      </div>
+    </div>
+
+    <section class="balance-chart-panel balance-chart-panel--expanded" id="balanceChartPanel" hidden>
+      <button
+        type="button"
+        class="balance-chart-toggle"
+        id="balanceChartToggle"
+        aria-expanded="true"
+        aria-controls="balanceChartBody"
+      >
+        <span class="balance-chart-toggle-title">График баланса</span>
+        <span class="balance-chart-toggle-meta" id="balanceChartMeta"></span>
+        <span class="balance-chart-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="balance-chart-body" id="balanceChartBody">
+        <svg
+          class="balance-chart-svg"
+          id="balanceChartSvg"
+          viewBox="0 0 360 148"
+          role="img"
+          aria-labelledby="balanceChartTitle balanceChartDesc"
+        >
+          <title id="balanceChartTitle">График баланса по играм</title>
+          <desc id="balanceChartDesc">Баланс после каждой завершённой игры</desc>
+        </svg>
+      </div>
+    </section>
+
+    <div class="stats-empty" id="statsEmpty" hidden>
+      Пока нет завершённых сессий.<br />Сыграйте раунд и вернитесь сюда.
+    </div>
+
+    <div class="stats-list" id="statsList"></div>
+  </div>
+
+  <script src="assets/session-history.js"></script>
+  <script>
+    function formatMoney(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "$0.00";
+      return "$" + n.toFixed(2);
+    }
+
+    function formatMoneyCompact(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "$0";
+      const abs = Math.abs(n);
+      if (abs >= 10000) return "$" + (n / 1000).toFixed(1) + "k";
+      if (abs >= 1000) return "$" + (n / 1000).toFixed(2) + "k";
+      return "$" + Math.round(n);
+    }
+
+    const CHART_OPEN_STORAGE_KEY = "mergeMvpStatsChartOpen";
+
+    function isBalanceChartOpen() {
+      try {
+        return localStorage.getItem(CHART_OPEN_STORAGE_KEY) !== "0";
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function setBalanceChartOpen(open) {
+      try {
+        localStorage.setItem(CHART_OPEN_STORAGE_KEY, open ? "1" : "0");
+      } catch (e) {
+        void e;
+      }
+    }
+
+    function buildBalanceSeries(history, active) {
+      const sorted = history
+        .slice()
+        .sort(function (a, b) {
+          return a.sessionNumber - b.sessionNumber;
+        });
+      const points = sorted.map(function (session) {
+        return {
+          game: session.sessionNumber,
+          balance: Number(session.balanceEnd) || 0,
+        };
+      });
+      if (active) {
+        const lastGame = sorted.length
+          ? sorted[sorted.length - 1].sessionNumber
+          : 0;
+        points.push({
+          game: lastGame + 1,
+          balance: Number(active.balance) || 0,
+          isActive: true,
+        });
+      }
+      return points;
+    }
+
+    function pickXAxisLabels(points) {
+      if (!points.length) return [];
+      if (points.length <= 5) {
+        return points.map(function (p) {
+          return p.game;
+        });
+      }
+      const games = points.map(function (p) {
+        return p.game;
+      });
+      const first = games[0];
+      const last = games[games.length - 1];
+      const mid = games[Math.floor(games.length / 2)];
+      const labels = [first];
+      if (mid !== first && mid !== last) labels.push(mid);
+      if (last !== first) labels.push(last);
+      return labels;
+    }
+
+    function renderBalanceChart(svg, points) {
+      while (svg.firstChild) {
+        svg.removeChild(svg.firstChild);
+      }
+      if (!points.length) return;
+
+      const NS = "http://www.w3.org/2000/svg";
+      const width = 360;
+      const height = 148;
+      const pad = { top: 10, right: 10, bottom: 22, left: 42 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+
+      const balances = points.map(function (p) {
+        return p.balance;
+      });
+      let minY = Math.min.apply(null, balances);
+      let maxY = Math.max.apply(null, balances);
+      if (minY === maxY) {
+        minY -= 10;
+        maxY += 10;
+      }
+      const yPad = (maxY - minY) * 0.12 || 10;
+      minY -= yPad;
+      maxY += yPad;
+
+      const minGame = points[0].game;
+      const maxGame = points[points.length - 1].game;
+      const gameSpan = Math.max(1, maxGame - minGame);
+
+      function xPos(game) {
+        if (points.length === 1) return pad.left + plotW / 2;
+        return pad.left + ((game - minGame) / gameSpan) * plotW;
+      }
+      function yPos(balance) {
+        return pad.top + (1 - (balance - minY) / (maxY - minY)) * plotH;
+      }
+
+      const gridGroup = document.createElementNS(NS, "g");
+      for (let i = 0; i < 4; i++) {
+        const t = i / 3;
+        const y = pad.top + t * plotH;
+        const value = maxY - t * (maxY - minY);
+        const line = document.createElementNS(NS, "line");
+        line.setAttribute("class", "balance-chart-grid-line");
+        line.setAttribute("x1", String(pad.left));
+        line.setAttribute("x2", String(width - pad.right));
+        line.setAttribute("y1", String(y));
+        line.setAttribute("y2", String(y));
+        gridGroup.appendChild(line);
+        const label = document.createElementNS(NS, "text");
+        label.setAttribute("class", "balance-chart-axis-label");
+        label.setAttribute("x", String(pad.left - 6));
+        label.setAttribute("y", String(y + 3));
+        label.setAttribute("text-anchor", "end");
+        label.textContent = formatMoneyCompact(value);
+        gridGroup.appendChild(label);
+      }
+      svg.appendChild(gridGroup);
+
+      const xLabels = pickXAxisLabels(points);
+      xLabels.forEach(function (game) {
+        const label = document.createElementNS(NS, "text");
+        label.setAttribute("class", "balance-chart-axis-label");
+        label.setAttribute("x", String(xPos(game)));
+        label.setAttribute("y", String(height - 4));
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = String(game);
+        svg.appendChild(label);
+      });
+
+      if (points.length > 1) {
+        const path = document.createElementNS(NS, "path");
+        path.setAttribute("class", "balance-chart-line");
+        const d = points
+          .map(function (p, i) {
+            const cmd = i === 0 ? "M" : "L";
+            return cmd + xPos(p.game).toFixed(2) + " " + yPos(p.balance).toFixed(2);
+          })
+          .join(" ");
+        path.setAttribute("d", d);
+        svg.appendChild(path);
+      }
+
+      points.forEach(function (p) {
+        const dot = document.createElementNS(NS, "circle");
+        dot.setAttribute("class", "balance-chart-dot" + (p.isActive ? " balance-chart-dot--active" : ""));
+        dot.setAttribute("cx", String(xPos(p.game)));
+        dot.setAttribute("cy", String(yPos(p.balance)));
+        dot.setAttribute("r", p.isActive ? "4" : "3");
+        svg.appendChild(dot);
+      });
+    }
+
+    function updateBalanceChartPanel(history, active) {
+      const panel = document.getElementById("balanceChartPanel");
+      const meta = document.getElementById("balanceChartMeta");
+      const svg = document.getElementById("balanceChartSvg");
+      const points = buildBalanceSeries(history, active);
+
+      if (!points.length) {
+        panel.hidden = true;
+        return;
+      }
+
+      panel.hidden = false;
+      const lastBalance = points[points.length - 1].balance;
+      meta.textContent =
+        formatMoney(lastBalance) + " · " + gamesLabel(points.length);
+      renderBalanceChart(svg, points);
+
+      const open = isBalanceChartOpen();
+      setBalanceChartExpanded(open);
+    }
+
+    function setBalanceChartExpanded(open) {
+      const panel = document.getElementById("balanceChartPanel");
+      const toggle = document.getElementById("balanceChartToggle");
+      const body = document.getElementById("balanceChartBody");
+      panel.classList.toggle("balance-chart-panel--expanded", open);
+      body.hidden = !open;
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function gamesLabel(n) {
+      const mod10 = n % 10;
+      const mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return n + " игра";
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+        return n + " игры";
+      }
+      return n + " игр";
+    }
+
+    function coeffToneClass(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return "coeff-tone-mid";
+      if (n >= 2) return "coeff-tone-high";
+      if (n >= 1) return "coeff-tone-mid";
+      return "coeff-tone-low";
+    }
+
+    function isCrashStep(session, step, stepIndex, allSteps) {
+      if (step.crash) return true;
+      if (session.outcome !== "crash" || !allSteps.length) return false;
+      return stepIndex === allSteps.length - 1;
+    }
+
+    function stepCoeffClass(session, step, stepIndex, allSteps) {
+      if (isCrashStep(session, step, stepIndex, allSteps)) {
+        return "session-step-coeff--crash";
+      }
+      return coeffToneClass(step.coeff);
+    }
+
+    function outcomeLabel(outcome) {
+      if (outcome === "active") return "В игре";
+      if (outcome === "cashout") return "Кэшаут";
+      if (outcome === "crash") return "Бомба";
+      if (outcome === "no_pairs") return "Нет пар";
+      return outcome;
+    }
+
+    function outcomeClass(outcome) {
+      if (outcome === "active") return "session-card-outcome--active";
+      if (outcome === "cashout") return "session-card-outcome--cashout";
+      if (outcome === "crash") return "session-card-outcome--crash";
+      return "session-card-outcome--no_pairs";
+    }
+
+    function formatDate(ts) {
+      try {
+        return new Date(ts).toLocaleString("ru-RU", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function stepsCount(session) {
+      if (session.isActive && session.roundIndex != null) {
+        return session.roundIndex;
+      }
+      return session.stepCoeffs && session.stepCoeffs.length
+        ? session.stepCoeffs.length
+        : 0;
+    }
+
+    function activeSessionToCardModel(active) {
+      const log = active.sessionLog || {};
+      const stepCoeffs = Array.isArray(log.stepCoeffs) ? log.stepCoeffs : [];
+      const coeff = Number(active.totalCoeff) || 0;
+      const bet = Number(active.sessionBet) || 0;
+      return {
+        isActive: true,
+        balanceBefore:
+          Number(log.balanceBefore) > 0
+            ? Number(log.balanceBefore)
+            : Number(active.balance) + bet,
+        balanceEnd: Number(active.balance) || 0,
+        bet: bet,
+        win: bet * coeff,
+        finalCoeff: coeff,
+        outcome: "active",
+        profile: log.profile || "math3",
+        stepCoeffs: stepCoeffs,
+        endedAt: active.savedAt || Date.now(),
+        roundIndex: Number(active.roundIndex) || 0,
+      };
+    }
+
+    function stepsLabel(n) {
+      const mod10 = n % 10;
+      const mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return n + " шаг";
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+        return n + " шага";
+      }
+      return n + " шагов";
+    }
+
+    function renderSessionCard(session) {
+      const isActive = session.isActive === true;
+      const card = document.createElement("article");
+      card.className = "session-card session-card--collapsed";
+      if (isActive) {
+        card.classList.add("session-card--active");
+      }
+
+      const stepCount = stepsCount(session);
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "session-card-toggle";
+      toggle.setAttribute("aria-expanded", "false");
+
+      const toggleMain = document.createElement("div");
+      toggleMain.className = "session-card-toggle-main";
+
+      const num = document.createElement("span");
+      num.className = "session-card-num";
+      num.textContent = isActive
+        ? "Текущая сессия"
+        : "Сессия #" + session.sessionNumber;
+
+      const summary = document.createElement("div");
+      summary.className = "session-card-summary";
+
+      const badge = document.createElement("span");
+      badge.className =
+        "session-card-outcome " + outcomeClass(session.outcome);
+      badge.textContent = outcomeLabel(session.outcome);
+
+      const coeffChip = document.createElement("span");
+      coeffChip.className =
+        "session-card-quick session-card-quick--coeff " +
+        coeffToneClass(session.finalCoeff);
+      coeffChip.textContent = "x" + session.finalCoeff.toFixed(2);
+
+      const winChip = document.createElement("span");
+      winChip.className =
+        "session-card-quick " +
+        (session.win > 0
+          ? "session-card-quick--win"
+          : "session-card-quick--win-zero");
+      winChip.textContent = formatMoney(session.win);
+
+      const stepsChip = document.createElement("span");
+      stepsChip.className = "session-card-quick session-card-quick--steps";
+      stepsChip.textContent = stepsLabel(stepCount);
+
+      summary.appendChild(badge);
+      summary.appendChild(coeffChip);
+      summary.appendChild(winChip);
+      summary.appendChild(stepsChip);
+
+      toggleMain.appendChild(num);
+      toggleMain.appendChild(summary);
+
+      const chevron = document.createElement("span");
+      chevron.className = "session-card-chevron";
+      chevron.setAttribute("aria-hidden", "true");
+      chevron.textContent = "▼";
+
+      toggle.appendChild(toggleMain);
+      toggle.appendChild(chevron);
+
+      const body = document.createElement("div");
+      body.className = "session-card-body";
+      body.hidden = true;
+
+      const grid = document.createElement("div");
+      grid.className = "session-card-grid";
+      const rows = isActive
+        ? [
+            ["Баланс до", formatMoney(session.balanceBefore)],
+            ["Баланс сейчас", formatMoney(session.balanceEnd)],
+            ["Ставка", formatMoney(session.bet)],
+            [
+              "Потенциальный выигрыш",
+              formatMoney(session.win),
+              session.win > 0
+                ? "session-card-value--win"
+                : "session-card-value--loss",
+            ],
+            [
+              "Текущий x",
+              "x" + session.finalCoeff.toFixed(2),
+              coeffToneClass(session.finalCoeff),
+            ],
+            ["Профиль", session.profile === "math2" ? "Math2" : "Math3"],
+          ]
+        : [
+            ["Баланс до", formatMoney(session.balanceBefore)],
+            ["Баланс после", formatMoney(session.balanceEnd)],
+            ["Ставка", formatMoney(session.bet)],
+            [
+              "Выигрыш",
+              formatMoney(session.win),
+              session.win > 0
+                ? "session-card-value--win"
+                : "session-card-value--loss",
+            ],
+            [
+              "Итоговый x",
+              "x" + session.finalCoeff.toFixed(2),
+              coeffToneClass(session.finalCoeff),
+            ],
+            ["Профиль", session.profile === "math2" ? "Math2" : "Math3"],
+          ];
+      rows.forEach(function (row) {
+        const label = document.createElement("span");
+        label.className = "session-card-label";
+        label.textContent = row[0];
+        const value = document.createElement("span");
+        value.className = "session-card-value" + (row[2] ? " " + row[2] : "");
+        value.textContent = row[1];
+        grid.appendChild(label);
+        grid.appendChild(value);
+      });
+
+      const stepsWrap = document.createElement("div");
+      stepsWrap.className = "session-steps";
+      const stepsTitle = document.createElement("p");
+      stepsTitle.className = "session-steps-title";
+      stepsTitle.textContent = "Коэффициенты по шагам";
+      stepsWrap.appendChild(stepsTitle);
+      const stepsList = document.createElement("div");
+      stepsList.className = "session-steps-list";
+      if (session.stepCoeffs && session.stepCoeffs.length) {
+        session.stepCoeffs.forEach(function (step, stepIndex) {
+          const isCrash = isCrashStep(
+            session,
+            step,
+            stepIndex,
+            session.stepCoeffs
+          );
+          const chip = document.createElement("span");
+          chip.className =
+            "session-step-chip" + (isCrash ? " session-step-chip--crash" : "");
+          chip.innerHTML =
+            '<span class="session-step-round">Шаг ' +
+            step.round +
+            '</span><span class="session-step-coeff ' +
+            stepCoeffClass(session, step, stepIndex, session.stepCoeffs) +
+            '">x' +
+            step.coeff.toFixed(2) +
+            "</span>";
+          stepsList.appendChild(chip);
+        });
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "session-card-label";
+        empty.textContent = "—";
+        stepsList.appendChild(empty);
+      }
+      stepsWrap.appendChild(stepsList);
+
+      const meta = document.createElement("div");
+      meta.className = "session-card-meta";
+      meta.textContent = isActive
+        ? "Обновлено " + formatDate(session.endedAt)
+        : formatDate(session.endedAt);
+
+      body.appendChild(grid);
+      body.appendChild(stepsWrap);
+      body.appendChild(meta);
+
+      toggle.addEventListener("click", function () {
+        const expanded = card.classList.toggle("session-card--expanded");
+        card.classList.toggle("session-card--collapsed", !expanded);
+        body.hidden = !expanded;
+        toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      });
+
+      card.appendChild(toggle);
+      card.appendChild(body);
+      return card;
+    }
+
+    function render() {
+      const history = MergeSessionHistory.loadHistory();
+      const active = MergeSessionHistory.loadActiveSession();
+      const agg = MergeSessionHistory.loadAggregates();
+      const listEl = document.getElementById("statsList");
+      const emptyEl = document.getElementById("statsEmpty");
+      const summaryEl = document.getElementById("statsSummary");
+
+      listEl.replaceChildren();
+
+      const hasHistory = history.length > 0;
+      const hasContent = hasHistory || !!active;
+
+      if (!hasContent) {
+        emptyEl.hidden = false;
+        summaryEl.hidden = true;
+        document.getElementById("balanceChartPanel").hidden = true;
+        return;
+      }
+
+      emptyEl.hidden = true;
+      summaryEl.hidden = !hasHistory;
+      updateBalanceChartPanel(history, active);
+
+      if (hasHistory) {
+        document.getElementById("summaryTotal").textContent = String(
+          agg.totalSessions
+        );
+        document.getElementById("summaryCashouts").textContent = String(
+          agg.cashouts
+        );
+        document.getElementById("summaryBombs").textContent = String(
+          agg.crashes
+        );
+        document.getElementById("summaryNoPairs").textContent = String(
+          agg.noPairsEnd
+        );
+        const avg =
+          agg.totalSessions > 0 ? agg.sumCoeff / agg.totalSessions : 0;
+        document.getElementById("summaryAvgCoeff").textContent =
+          "x" + avg.toFixed(2);
+        const avgSteps =
+          agg.totalSessions > 0 ? agg.sumRounds / agg.totalSessions : 0;
+        document.getElementById("summaryAvgSteps").textContent =
+          avgSteps.toFixed(1);
+        const net = agg.totalWon - agg.totalWagered;
+        const netEl = document.getElementById("summaryNet");
+        netEl.textContent = formatMoney(net);
+        netEl.style.color = net >= 0 ? "#24f49d" : "#f87171";
+      }
+
+      if (active) {
+        listEl.appendChild(
+          renderSessionCard(activeSessionToCardModel(active))
+        );
+      }
+
+      history.forEach(function (session) {
+        listEl.appendChild(renderSessionCard(session));
+      });
+
+      const resetBtn = document.getElementById("statsResetBtn");
+      if (resetBtn) {
+        resetBtn.disabled = !hasHistory;
+      }
+    }
+
+    document.getElementById("statsBackBtn").addEventListener("click", function () {
+      window.location.href = "index.html";
+    });
+
+    document.getElementById("balanceChartToggle").addEventListener("click", function () {
+      const body = document.getElementById("balanceChartBody");
+      const open = body.hidden;
+      setBalanceChartOpen(open);
+      setBalanceChartExpanded(open);
+    });
+
+    document.getElementById("statsResetBtn").addEventListener("click", function () {
+      const history = MergeSessionHistory.loadHistory();
+      if (!history.length) return;
+      const ok = window.confirm(
+        "Удалить всю статистику сессий? Это действие нельзя отменить."
+      );
+      if (!ok) return;
+      MergeSessionHistory.clearAll();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
