@@ -213,23 +213,27 @@
     id: "math4",
     label: "Math4",
     c1: 0.02798,
-    g: 1.22661,
-    stageThresholds: [0.17750, 0.49775, 1.70775],
-    alphaStages: [0.70028, 0.18708, 0.73031, 0.13306],
+    g: 1.23261,
+    stageThresholds: [0.17750, 0.49775, 1.550775],
+    alphaStages: [0.70028, 0.18708, 0.73031, 0.10306],
     factorsBelowOne: { existing: 0.25013, new: 4.32571 },
     factorsAboveOne: { existing: 0.30802, new: 2.86874 },
     computeBombProb: function (totalCoeff, roundNumber, bonusAlreadyAppeared) {
       const BOMB_P = 0.09128;
+      let prob;
       if (totalCoeff < 0.8) {
-        let prob = BOMB_P * 0.093;
-        if (bonusAlreadyAppeared) prob *= 10;
+        prob = BOMB_P * 0.093;
         if (roundNumber === 1) prob *= 0.1;
-        return prob;
+        if (bonusAlreadyAppeared) prob *= 7.0;
+      } else {
+        prob = BOMB_P;
       }
-      return BOMB_P;
+      if (roundNumber === 4) prob *= 1.1;
+      if (bonusAlreadyAppeared) prob *= 1.5;
+      return prob;
     },
     computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
-      let prob = 0.00478;
+      let prob = 0.00518;
       if (roundNumber <= 2) prob *= 0.1;
       if (bonusAlreadyAppeared) prob *= 0.1;
       return prob;
