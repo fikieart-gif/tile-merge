@@ -884,6 +884,16 @@
       color: #fbbf24;
       background: rgba(251, 191, 36, 0.06);
     }
+    .bet-sheet-simulate--aleksey {
+      border-color: #3a345a;
+      background: rgba(167, 139, 250, 0.08);
+      color: #a78bfa;
+    }
+    .bet-sheet-simulate-row--aleksey .bet-sheet-simulate-info {
+      border-color: #3a345a;
+      color: #a78bfa;
+      background: rgba(167, 139, 250, 0.06);
+    }
     .bet-sheet-sim-tooltip {
       position: fixed;
       z-index: 2147483647;
@@ -1597,6 +1607,19 @@
           i
         </button>
       </div>
+      <div class="bet-sheet-simulate-row bet-sheet-simulate-row--aleksey">
+        <button type="button" class="bet-sheet-simulate bet-sheet-simulate--aleksey" id="betSheetSimulateAleksey">
+          <span class="bet-sheet-simulate-label">Стратегия Алексея</span>
+        </button>
+        <button
+          type="button"
+          class="bet-sheet-simulate-info"
+          id="betSheetSimulateAlekseyInfo"
+          aria-label="Описание: Стратегия Алексея"
+        >
+          i
+        </button>
+      </div>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1664,7 +1687,7 @@
 </div>
 </div>
 
-<script src="assets/game-math.js"></script>
+<script src="assets/game-math.js?v=2"></script>
 <script src="assets/session-history.js"></script>
 <script src="assets/js/merge-flight.js?v=71"></script>
 <script>
@@ -1773,6 +1796,17 @@
         stepCoeffs: saved.sessionLog.stepCoeffs.slice(),
         profile: saved.sessionLog.profile,
       };
+      const sessionProfile = saved.sessionLog.profile;
+      if (
+        sessionProfile &&
+        window.MergeGameMath.setActiveProfile(sessionProfile)
+      ) {
+        bindMathApi(window.MergeGameMath);
+        updateMathProfileButtons(sessionProfile);
+        try {
+          localStorage.setItem(MATH_PROFILE_STORAGE_KEY, sessionProfile);
+        } catch (e) {}
+      }
     } else {
       currentSessionLog = null;
     }
@@ -1858,6 +1892,18 @@
     return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
   }
 
+  function countEmptyGridCells(grid) {
+    let count = 0;
+    for (let i = 0; i < grid.length; i++) {
+      if (grid[i] === 0) count += 1;
+    }
+    return count;
+  }
+
+  function shouldAlekseyCashout(totalCoeff, grid) {
+    return totalCoeff > 0 && countEmptyGridCells(grid) > 2;
+  }
+
   const PASHA_DEFAULT_BET = 50;
   const PASHA_RECOVERY_BET = 250;
   const PASHA_WIN_RESET = 250;
@@ -1865,6 +1911,7 @@
   const BULK_SIM_BTN_LABELS = {
     betSheetSimulate50: "50 рандомных сессий",
     betSheetSimulatePasha: "Стратегия Паши",
+    betSheetSimulateAleksey: "Стратегия Алексея",
   };
   const BULK_SIM_INFO = {
     random: {
@@ -1882,6 +1929,15 @@
         "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
         "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
         "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.",
+    },
+    aleksey: {
+      title: "Стратегия Алексея",
+      text:
+        "50 сессий по выбранной математике (Math2/Math3/Math4) и ставке с листа.\n\n" +
+        "После каждого шага:\n" +
+        "• x > 1.5 и на поле 1–2 пустые клетки — играем дальше.\n" +
+        "• Если пустых клеток больше двух — кэшаут.\n" +
+        "• Иначе продолжаем набирать коэффициент.",
     },
   };
 
@@ -2033,6 +2089,23 @@
         }
       }
 
+      if (playMode === "aleksey") {
+        if (shouldAlekseyCashout(state.totalCoeff, state.grid)) {
+          outcome = "cashout";
+          finalCoeff = state.totalCoeff;
+          win = state.sessionBet * state.totalCoeff;
+          sessionBalance += win;
+          break;
+        }
+        if (state.roundIndex >= maxRounds && state.totalCoeff > 0) {
+          outcome = "cashout";
+          finalCoeff = state.totalCoeff;
+          win = state.sessionBet * state.totalCoeff;
+          sessionBalance += win;
+          break;
+        }
+      }
+
       if (
         playMode === "until_coeff_2" &&
         state.roundIndex >= maxRounds &&
@@ -2150,6 +2223,42 @@
     return simBalance;
   }
 
+  function runBulkAlekseySessions(count) {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
+    if (!window.MergeSessionHistory) return null;
+
+    let simBalance = balance;
+    const bet = readBetFromSheetInput();
+    let lastBet = bet;
+
+    setBulkSimButtonsDisabled(true);
+    window.MergeSessionHistory.clearActiveSession();
+    clearSessionLog();
+
+    for (let i = 0; i < count; i++) {
+      if (simBalance < MIN_BET) {
+        simBalance = 1000;
+      }
+      const sessionBet = Math.min(
+        bet,
+        Math.max(MIN_BET, Math.floor(simBalance))
+      );
+      const result = simulateOneSessionFast(simBalance, sessionBet, {
+        playMode: "aleksey",
+      });
+      simBalance = result.balanceEnd;
+      setBulkSimProgress("betSheetSimulateAleksey", i + 1, count);
+    }
+
+    balance = simBalance;
+    baseBetAmount = lastBet;
+    resetSession();
+    persistWalletState();
+    setBulkSimButtonsDisabled(false);
+    updateUI();
+    return simBalance;
+  }
+
   function recordCompletedSession(snapshot) {
     if (!snapshot || !(snapshot.bet > 0)) return;
     const record = {
@@ -2206,7 +2315,10 @@
   function switchMathProfile(profileId) {
     if (!canSwitchMathProfile()) return;
     if (window.MergeGameMath.getActiveProfileId() === profileId) return;
-    if (!window.MergeGameMath.setActiveProfile(profileId)) return;
+    if (!window.MergeGameMath.setActiveProfile(profileId)) {
+      updateMathProfileButtons(window.MergeGameMath.getActiveProfileId());
+      return;
+    }
     bindMathApi(window.MergeGameMath);
     try {
       localStorage.setItem(MATH_PROFILE_STORAGE_KEY, profileId);
@@ -2220,7 +2332,9 @@
       const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
       if (stored === "math2" || stored === "math3" || stored === "math4") saved = stored;
     } catch (e) {}
-    window.MergeGameMath.setActiveProfile(saved);
+    if (!window.MergeGameMath.setActiveProfile(saved)) {
+      saved = window.MergeGameMath.getActiveProfileId();
+    }
     bindMathApi(window.MergeGameMath);
     updateMathProfileButtons(saved);
   })();
@@ -4253,6 +4367,10 @@
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkPashaSessions(50);
   });
+  document.getElementById("betSheetSimulateAleksey").addEventListener("click", function () {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
+    runBulkAlekseySessions(50);
+  });
   document.getElementById("betSheetSimulate50Info").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "random");
@@ -4260,6 +4378,10 @@
   document.getElementById("betSheetSimulatePashaInfo").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "pasha");
+  });
+  document.getElementById("betSheetSimulateAlekseyInfo").addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleBetSheetSimTooltip(this, "aleksey");
   });
   document.addEventListener("click", function (e) {
     const tooltip = document.getElementById("betSheetSimTooltip");
