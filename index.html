@@ -557,7 +557,32 @@
       transition: background 0.05s ease-out;
     }
     .cell-level {
-      z-index: 1;
+      position: absolute;
+      left: 8%;
+      bottom: 10%;
+      z-index: 4;
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      pointer-events: none;
+      font-family: "Inter", system-ui, sans-serif;
+      color: rgba(255, 255, 255, 0.38);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+      user-select: none;
+      line-height: 1;
+    }
+    .cell-level-num {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .cell-level-suffix {
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .cell-level:empty {
+      display: none;
     }
     .cell-face.crash {
       background-color: #210a10;
@@ -1087,9 +1112,6 @@
       transition: opacity 0.04s ease-in-out;
     }
     .tile-emblem.tile-emblem--hidden {
-      display: none;
-    }
-    .cell-face.tile-asset .cell-level {
       display: none;
     }
     .crash-overlay {
@@ -3666,6 +3688,22 @@
     return spawnDelayByIndex;
   }
 
+  function setTileLevelLabel(face, level) {
+    if (!face) return;
+    const label = face.querySelector(".cell-level");
+    if (!label) return;
+    label.replaceChildren();
+    if (!(level > 0)) return;
+    const num = document.createElement("span");
+    num.className = "cell-level-num";
+    num.textContent = String(level);
+    const suffix = document.createElement("span");
+    suffix.className = "cell-level-suffix";
+    suffix.textContent = "lvl";
+    label.appendChild(num);
+    label.appendChild(suffix);
+  }
+
   function buildGridCellElement(level, index, spawnInMask, spawnDelayByIndex) {
     const cell = document.createElement("div");
     const slot = document.createElement("div");
@@ -3680,6 +3718,7 @@
       const face = document.createElement("div");
       const span = document.createElement("div");
       span.className = "cell-level";
+      span.setAttribute("aria-hidden", "true");
 
       if (level === TILE_CRASH) {
         cell.className = "cell";
@@ -3734,7 +3773,6 @@
           "assets/tiles/tile-" + level + "-emblem." + emblemExt
         );
         face.setAttribute("aria-label", "Тайл уровня " + level);
-        span.textContent = "";
         face.appendChild(plate);
         const emblemGlow = document.createElement("span");
         emblemGlow.className = "tile-emblem-glow";
@@ -3747,6 +3785,9 @@
       }
 
       face.appendChild(span);
+      if (level > 0 && level !== TILE_CRASH && level !== TILE_BONUS) {
+        setTileLevelLabel(face, level);
+      }
       if (spawnInMask && spawnInMask[index]) {
         const spawnDelayMs = spawnDelayByIndex[index] || 0;
         face.style.setProperty("--spawn-delay", spawnDelayMs + "ms");
@@ -3796,6 +3837,7 @@
     glow.style.backgroundImage = tileBgUrlFromRel(
       "assets/tiles/tile-" + level + "-emblem-glow." + emblemExt
     );
+    setTileLevelLabel(face, level);
     return true;
   }
 
