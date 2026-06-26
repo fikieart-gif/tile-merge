@@ -1549,7 +1549,7 @@
   }
 
   function switchMathProfile(profileId) {
-    if (isAnimating) return;
+    if (!canSwitchMathProfile()) return;
     if (window.MergeGameMath.getActiveProfileId() === profileId) return;
     if (!window.MergeGameMath.setActiveProfile(profileId)) return;
     bindMathApi(window.MergeGameMath);
@@ -1557,23 +1557,6 @@
       localStorage.setItem(MATH_PROFILE_STORAGE_KEY, profileId);
     } catch (e) {}
     updateMathProfileButtons(profileId);
-    if (betSheetBackdrop && betSheetBackdrop.classList.contains("visible")) {
-      betSheetBackdrop.classList.remove("visible");
-      betSheetBackdrop.setAttribute("aria-hidden", "true");
-    }
-    isStepLockedByBetStart = false;
-    hideCashoutCelebrationOverlay();
-    hideNoPairsToastOverlay();
-    if (crashOverlay) crashOverlay.classList.remove("visible");
-    if (noPairsOverlay) noPairsOverlay.classList.remove("visible");
-    clearWinToastTimer();
-    if (winToastBackdrop) {
-      winToastBackdrop.classList.remove("visible");
-      winToastBackdrop.setAttribute("aria-hidden", "true");
-      winToastBackdrop.removeAttribute("aria-label");
-    }
-    resetSession();
-    updateUI();
   }
 
   (function initMathProfile() {
@@ -2165,6 +2148,10 @@
   /** Накопленные «+кэф» за шаг: в ячейке до конца цепочки merge, затем полёт в coeffText */
   let pendingMergeCoeffs = [];
   let pendingMergeCoeffLayer = null;
+
+  function canSwitchMathProfile() {
+    return sessionBet === 0 && !isAnimating;
+  }
 
   const gridEl = document.getElementById("grid");
   const pageStackEl = document.querySelector(".page-stack");
@@ -2988,11 +2975,23 @@
 
     stepButton.disabled = isAnimating || !sessionAlive || isStepLockedByBetStart;
 
+    const mathSwitchAllowed = canSwitchMathProfile();
     mathProfileButtons.forEach(function (btn) {
-      btn.disabled = isAnimating;
+      btn.disabled = !mathSwitchAllowed;
+      if (!mathSwitchAllowed) {
+        btn.setAttribute(
+          "title",
+          "Завершите сессию, чтобы сменить математику"
+        );
+      } else {
+        btn.removeAttribute("title");
+      }
     });
     if (mathProfileSwitch) {
-      mathProfileSwitch.setAttribute("aria-disabled", isAnimating ? "true" : "false");
+      mathProfileSwitch.setAttribute(
+        "aria-disabled",
+        mathSwitchAllowed ? "false" : "true"
+      );
     }
 
     if (coeffStakeBlock) {
