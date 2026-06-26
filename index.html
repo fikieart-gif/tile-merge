@@ -296,6 +296,13 @@
       outline: 2px solid #4ec7fb;
       outline-offset: 2px;
     }
+    .math-profile-btn:disabled {
+      cursor: not-allowed;
+    }
+    .math-profile-btn:disabled:hover {
+      color: #8b8b9e;
+      border-color: #2e2e3a;
+    }
     .app-footer-logo {
       display: block;
       height: 16px;
@@ -1542,6 +1549,7 @@
   }
 
   function switchMathProfile(profileId) {
+    if (isAnimating) return;
     if (window.MergeGameMath.getActiveProfileId() === profileId) return;
     if (!window.MergeGameMath.setActiveProfile(profileId)) return;
     bindMathApi(window.MergeGameMath);
@@ -2696,6 +2704,8 @@
   const coeffWinAmount = document.getElementById("coeffWinAmount");
   const stepButton = document.getElementById("stepButton");
   const cashoutButton = document.getElementById("cashoutButton");
+  const mathProfileSwitch = document.querySelector(".math-profile-switch");
+  const mathProfileButtons = document.querySelectorAll(".math-profile-btn");
   const cashoutProfitText = document.getElementById("cashoutProfitText");
   const winToastBackdrop = document.getElementById("winToastBackdrop");
   let winToastCollectTimer = null;
@@ -2977,6 +2987,13 @@
     );
 
     stepButton.disabled = isAnimating || !sessionAlive || isStepLockedByBetStart;
+
+    mathProfileButtons.forEach(function (btn) {
+      btn.disabled = isAnimating;
+    });
+    if (mathProfileSwitch) {
+      mathProfileSwitch.setAttribute("aria-disabled", isAnimating ? "true" : "false");
+    }
 
     if (coeffStakeBlock) {
       const canEditStake = stakeTapOpensBetSheet();
