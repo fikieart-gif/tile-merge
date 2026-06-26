@@ -208,6 +208,9 @@
     .stats-summary-value--steps {
       color: #dfdfea;
     }
+    .stats-summary-value--bet {
+      color: #dfdfea;
+    }
     .stats-empty {
       padding: 40px 16px;
       text-align: center;
@@ -446,6 +449,10 @@
       <div class="stats-summary-item">
         <span class="stats-summary-label">Средний шаг</span>
         <span class="stats-summary-value stats-summary-value--steps" id="summaryAvgSteps">0</span>
+      </div>
+      <div class="stats-summary-item">
+        <span class="stats-summary-label">Средняя ставка</span>
+        <span class="stats-summary-value stats-summary-value--bet" id="summaryAvgBet">$0</span>
       </div>
       <div class="stats-summary-item">
         <span class="stats-summary-label">Итог</span>
@@ -1013,6 +1020,10 @@
           agg.totalSessions > 0 ? agg.sumRounds / agg.totalSessions : 0;
         document.getElementById("summaryAvgSteps").textContent =
           avgSteps.toFixed(1);
+        const avgBet =
+          agg.totalSessions > 0 ? agg.totalWagered / agg.totalSessions : 0;
+        document.getElementById("summaryAvgBet").textContent =
+          formatMoney(avgBet);
         const net = agg.totalWon - agg.totalWagered;
         const netEl = document.getElementById("summaryNet");
         netEl.textContent = formatMoney(net);

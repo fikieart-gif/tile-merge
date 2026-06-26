@@ -812,8 +812,33 @@
       font-weight: 300;
       line-height: 20px;
       text-align: center;
-      margin: 0 0 16px;
+      margin: 0 0 12px;
       padding: 0;
+    }
+    .bet-sheet-simulate {
+      display: block;
+      width: 100%;
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border: 1px solid #2e2e3a;
+      border-radius: 12px;
+      background: rgba(78, 199, 251, 0.08);
+      color: #4ec7fb;
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bet-sheet-simulate:focus-visible {
+      outline: 2px solid #4ec7fb;
+      outline-offset: 2px;
+    }
+    .bet-sheet-simulate:disabled {
+      opacity: 0.45;
+      cursor: default;
     }
     .bet-sheet-stepper {
       display: flex;
@@ -1465,6 +1490,9 @@
   <div class="bet-sheet-backdrop" id="betSheetBackdrop" aria-hidden="true">
     <div class="bet-sheet" id="betSheetPanel" role="dialog" aria-labelledby="betSheetTitle" aria-modal="true">
       <h2 class="bet-sheet-title" id="betSheetTitle">Сумма ставки</h2>
+      <button type="button" class="bet-sheet-simulate" id="betSheetSimulate50">
+        Сыграть 50 сессий
+      </button>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1647,6 +1675,198 @@
     pendingWin = 0;
     isStepLockedByBetStart = false;
     return true;
+  }
+
+  function simulateMergeChainSync(levels, coeffBase) {
+    let grid = levels.slice();
+    while (true) {
+      const pairs = findPairs(grid);
+      if (!pairs.length) {
+        return { grid: grid, totalCoeff: coeffBase + calcRoundCoeff(grid) };
+      }
+      grid = mergeLevelsFromPairs(grid, [pairs[0]]);
+    }
+  }
+
+  function simulatePlayStep(state) {
+    const stage = getCurrentStage(state.totalCoeff);
+    const levels = state.grid.slice();
+    const spawnMask = new Array(9).fill(false);
+    let bonusTileAppeared = state.bonusTileAppeared;
+    let crashSpawned = false;
+
+    for (let i = 0; i < 9; i++) {
+      if (crashSpawned) continue;
+      if (levels[i] === 0) {
+        const tile = pickTileForEmptyCell(
+          stage,
+          levels,
+          bonusTileAppeared,
+          state.totalCoeff,
+          state.roundIndex
+        );
+        if (tile === TILE_BONUS) bonusTileAppeared = true;
+        if (tile === TILE_CRASH) crashSpawned = true;
+        levels[i] = tile;
+        spawnMask[i] = true;
+      }
+    }
+
+    if (levels.some(function (l) {
+      return l === TILE_CRASH;
+    })) {
+      return {
+        kind: "crash",
+        coeff: state.totalCoeff,
+        bonusTileAppeared: bonusTileAppeared,
+      };
+    }
+
+    const fallen = applyGravityWithSpawnMask(levels, spawnMask).grid;
+    const merged = simulateMergeChainSync(fallen, state.totalCoeff);
+    const step = {
+      round: state.roundIndex,
+      coeff: Math.round(merged.totalCoeff * 100) / 100,
+    };
+
+    if (isGridFullNoPairs(merged.grid)) {
+      return {
+        kind: "no_pairs",
+        totalCoeff: merged.totalCoeff,
+        step: step,
+        bonusTileAppeared: bonusTileAppeared,
+        win: state.sessionBet * merged.totalCoeff,
+      };
+    }
+
+    return {
+      kind: "continue",
+      grid: merged.grid,
+      totalCoeff: merged.totalCoeff,
+      step: step,
+      bonusTileAppeared: bonusTileAppeared,
+    };
+  }
+
+  function shouldSimRandomCashout(roundIndex, totalCoeff) {
+    if (totalCoeff <= 0) return false;
+    return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
+  }
+
+  function simulateOneSessionFast(startBalance, bet) {
+    const profileId = window.MergeGameMath.getActiveProfileId();
+
+    const balanceBefore = startBalance;
+    let sessionBalance = startBalance - bet;
+    const stepCoeffs = [];
+    const state = {
+      grid: new Array(9).fill(0),
+      totalCoeff: 0,
+      roundIndex: 0,
+      sessionBet: bet,
+      bonusTileAppeared: false,
+    };
+
+    let outcome = "unknown";
+    let win = 0;
+    let finalCoeff = 0;
+
+    while (true) {
+      state.roundIndex += 1;
+      const result = simulatePlayStep(state);
+
+      if (result.kind === "crash") {
+        outcome = "crash";
+        finalCoeff = result.coeff;
+        stepCoeffs.push({
+          round: state.roundIndex,
+          coeff: Math.round(result.coeff * 100) / 100,
+          crash: true,
+        });
+        break;
+      }
+
+      stepCoeffs.push(result.step);
+      state.grid = result.grid || state.grid;
+      state.totalCoeff = result.totalCoeff;
+      state.bonusTileAppeared = result.bonusTileAppeared;
+
+      if (result.kind === "no_pairs") {
+        outcome = "no_pairs";
+        win = result.win;
+        finalCoeff = result.totalCoeff;
+        sessionBalance += win;
+        break;
+      }
+
+      if (
+        shouldSimRandomCashout(state.roundIndex, state.totalCoeff) ||
+        state.roundIndex >= 40
+      ) {
+        outcome = "cashout";
+        finalCoeff = state.totalCoeff;
+        win = state.sessionBet * state.totalCoeff;
+        sessionBalance += win;
+        break;
+      }
+    }
+
+    if (window.MergeSessionHistory) {
+      window.MergeSessionHistory.recordSession({
+        balanceBefore: balanceBefore,
+        balanceEnd: sessionBalance,
+        bet: bet,
+        win: win,
+        finalCoeff: finalCoeff,
+        outcome: outcome,
+        profile: profileId,
+        stepCoeffs: stepCoeffs,
+        endedAt: Date.now(),
+      });
+    }
+
+    return sessionBalance;
+  }
+
+  function runBulkRandomSessions(count) {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
+    if (!window.MergeSessionHistory) return null;
+
+    const simBtn = document.getElementById("betSheetSimulate50");
+    let simBalance = balance;
+    let lastBet = baseBetAmount;
+
+    if (simBtn) {
+      simBtn.disabled = true;
+    }
+
+    window.MergeSessionHistory.clearActiveSession();
+    clearSessionLog();
+
+    for (let i = 0; i < count; i++) {
+      if (simBalance < MIN_BET) {
+        simBalance = 1000;
+      }
+      const bet = pickRandomBetForBalance(simBalance);
+      simBalance = simulateOneSessionFast(simBalance, bet);
+      lastBet = bet;
+      if (simBtn) {
+        simBtn.textContent = "Играем… " + (i + 1) + "/" + count;
+      }
+    }
+
+    balance = simBalance;
+    baseBetAmount = lastBet;
+    resetSession();
+    persistWalletState();
+
+    if (simBtn) {
+      simBtn.disabled = false;
+      simBtn.textContent = "Сыграть 50 сессий";
+    }
+
+    updateUI();
+    return simBalance;
   }
 
   function recordCompletedSession(snapshot) {
@@ -3605,6 +3825,12 @@
     return Math.max(MIN_BET, Math.floor(balance));
   }
 
+  function pickRandomBetForBalance(walletBalance) {
+    const cap = Math.max(MIN_BET, Math.floor(walletBalance));
+    if (cap <= MIN_BET) return MIN_BET;
+    return MIN_BET + Math.floor(Math.random() * (cap - MIN_BET + 1));
+  }
+
   function clampBetAmount(n) {
     let v = Math.floor(Number(n));
     if (!Number.isFinite(v) || v < MIN_BET) v = MIN_BET;
@@ -3733,6 +3959,10 @@
   });
   betSheetConfirm.addEventListener("click", function () {
     finishBetSheet({ startRound: true });
+  });
+  document.getElementById("betSheetSimulate50").addEventListener("click", function () {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
+    runBulkRandomSessions(50);
   });
   betSheetBackdrop.addEventListener("click", function (e) {
     if (e.target === betSheetBackdrop) {
