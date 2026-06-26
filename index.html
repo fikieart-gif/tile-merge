@@ -894,6 +894,16 @@
       color: #a78bfa;
       background: rgba(167, 139, 250, 0.06);
     }
+    .bet-sheet-simulate--x1 {
+      border-color: #1e3a4a;
+      background: rgba(78, 199, 251, 0.08);
+      color: #4ec7fb;
+    }
+    .bet-sheet-simulate-row--x1 .bet-sheet-simulate-info {
+      border-color: #1e3a4a;
+      color: #4ec7fb;
+      background: rgba(78, 199, 251, 0.06);
+    }
     .bet-sheet-sim-tooltip {
       position: fixed;
       z-index: 2147483647;
@@ -1620,6 +1630,19 @@
           i
         </button>
       </div>
+      <div class="bet-sheet-simulate-row bet-sheet-simulate-row--x1">
+        <button type="button" class="bet-sheet-simulate bet-sheet-simulate--x1" id="betSheetSimulateX1">
+          <span class="bet-sheet-simulate-label">Вывод при &gt;= x1</span>
+        </button>
+        <button
+          type="button"
+          class="bet-sheet-simulate-info"
+          id="betSheetSimulateX1Info"
+          aria-label="Описание: Вывод при >= x1"
+        >
+          i
+        </button>
+      </div>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1908,10 +1931,12 @@
   const PASHA_RECOVERY_BET = 250;
   const PASHA_WIN_RESET = 250;
   const PASHA_CASHOUT_COEFF = 2;
+  const CASHOUT_X1_COEFF = 1;
   const BULK_SIM_BTN_LABELS = {
     betSheetSimulate50: "50 рандомных сессий",
     betSheetSimulatePasha: "Стратегия Паши",
     betSheetSimulateAleksey: "Стратегия Алексея",
+    betSheetSimulateX1: "Вывод при >= x1",
   };
   const BULK_SIM_INFO = {
     random: {
@@ -1938,6 +1963,13 @@
         "Как только x ≥ 1.5 — смотрим пустые клетки в конце раунда:\n" +
         "• больше 2 пустых — кэшаут;\n" +
         "• 1–2 пустых — играем дальше.",
+    },
+    x1: {
+      title: "Вывод при >= x1",
+      text:
+        "50 сессий по выбранной математике (Math2/Math3/Math4) и ставке с листа.\n\n" +
+        "Играем до x1 и выше, затем сразу кэшаут. " +
+        "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.",
     },
   };
 
@@ -2248,6 +2280,43 @@
       });
       simBalance = result.balanceEnd;
       setBulkSimProgress("betSheetSimulateAleksey", i + 1, count);
+    }
+
+    balance = simBalance;
+    baseBetAmount = lastBet;
+    resetSession();
+    persistWalletState();
+    setBulkSimButtonsDisabled(false);
+    updateUI();
+    return simBalance;
+  }
+
+  function runBulkCashoutX1Sessions(count) {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
+    if (!window.MergeSessionHistory) return null;
+
+    let simBalance = balance;
+    const bet = readBetFromSheetInput();
+    let lastBet = bet;
+
+    setBulkSimButtonsDisabled(true);
+    window.MergeSessionHistory.clearActiveSession();
+    clearSessionLog();
+
+    for (let i = 0; i < count; i++) {
+      if (simBalance < MIN_BET) {
+        simBalance = 1000;
+      }
+      const sessionBet = Math.min(
+        bet,
+        Math.max(MIN_BET, Math.floor(simBalance))
+      );
+      const result = simulateOneSessionFast(simBalance, sessionBet, {
+        playMode: "until_coeff_2",
+        cashoutCoeffMin: CASHOUT_X1_COEFF,
+      });
+      simBalance = result.balanceEnd;
+      setBulkSimProgress("betSheetSimulateX1", i + 1, count);
     }
 
     balance = simBalance;
@@ -4371,6 +4440,10 @@
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkAlekseySessions(50);
   });
+  document.getElementById("betSheetSimulateX1").addEventListener("click", function () {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
+    runBulkCashoutX1Sessions(50);
+  });
   document.getElementById("betSheetSimulate50Info").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "random");
@@ -4382,6 +4455,10 @@
   document.getElementById("betSheetSimulateAlekseyInfo").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "aleksey");
+  });
+  document.getElementById("betSheetSimulateX1Info").addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleBetSheetSimTooltip(this, "x1");
   });
   document.addEventListener("click", function (e) {
     const tooltip = document.getElementById("betSheetSimTooltip");
