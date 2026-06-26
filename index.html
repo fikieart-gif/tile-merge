@@ -840,6 +840,12 @@
       opacity: 0.45;
       cursor: default;
     }
+    .bet-sheet-simulate--pasha {
+      margin-top: 8px;
+      border-color: #3a3428;
+      background: rgba(251, 191, 36, 0.08);
+      color: #fbbf24;
+    }
     .bet-sheet-stepper {
       display: flex;
       flex-direction: column;
@@ -1493,6 +1499,9 @@
       <button type="button" class="bet-sheet-simulate" id="betSheetSimulate50">
         Сыграть 50 сессий
       </button>
+      <button type="button" class="bet-sheet-simulate bet-sheet-simulate--pasha" id="betSheetSimulatePasha">
+        50 игр Паша
+      </button>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1753,7 +1762,40 @@
     return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
   }
 
-  function simulateOneSessionFast(startBalance, bet) {
+  const PASHA_DEFAULT_BET = 50;
+  const PASHA_RECOVERY_BET = 250;
+  const PASHA_WIN_RESET = 250;
+  const PASHA_CASHOUT_COEFF = 2;
+  const BULK_SIM_BTN_LABELS = {
+    betSheetSimulate50: "Сыграть 50 сессий",
+    betSheetSimulatePasha: "50 игр Паша",
+  };
+
+  function setBulkSimButtonsDisabled(disabled) {
+    Object.keys(BULK_SIM_BTN_LABELS).forEach(function (id) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = disabled;
+      if (!disabled) {
+        btn.textContent = BULK_SIM_BTN_LABELS[id];
+      }
+    });
+  }
+
+  function setBulkSimProgress(activeBtnId, current, total) {
+    const btn = document.getElementById(activeBtnId);
+    if (btn) {
+      btn.textContent = "Играем… " + current + "/" + total;
+    }
+  }
+
+  function simulateOneSessionFast(startBalance, bet, opts) {
+    opts = opts || {};
+    const playMode = opts.playMode || "random";
+    const cashoutCoeffMin =
+      typeof opts.cashoutCoeffMin === "number" ? opts.cashoutCoeffMin : 2;
+    const maxRounds =
+      typeof opts.maxRounds === "number" ? opts.maxRounds : 120;
     const profileId = window.MergeGameMath.getActiveProfileId();
 
     const balanceBefore = startBalance;
@@ -1800,8 +1842,33 @@
       }
 
       if (
-        shouldSimRandomCashout(state.roundIndex, state.totalCoeff) ||
-        state.roundIndex >= 40
+        playMode === "until_coeff_2" &&
+        state.totalCoeff >= cashoutCoeffMin
+      ) {
+        outcome = "cashout";
+        finalCoeff = state.totalCoeff;
+        win = state.sessionBet * state.totalCoeff;
+        sessionBalance += win;
+        break;
+      }
+
+      if (playMode === "random") {
+        if (
+          shouldSimRandomCashout(state.roundIndex, state.totalCoeff) ||
+          state.roundIndex >= 40
+        ) {
+          outcome = "cashout";
+          finalCoeff = state.totalCoeff;
+          win = state.sessionBet * state.totalCoeff;
+          sessionBalance += win;
+          break;
+        }
+      }
+
+      if (
+        playMode === "until_coeff_2" &&
+        state.roundIndex >= maxRounds &&
+        state.totalCoeff > 0
       ) {
         outcome = "cashout";
         finalCoeff = state.totalCoeff;
@@ -1825,20 +1892,22 @@
       });
     }
 
-    return sessionBalance;
+    return {
+      balanceEnd: sessionBalance,
+      outcome: outcome,
+      win: win,
+      finalCoeff: finalCoeff,
+    };
   }
 
   function runBulkRandomSessions(count) {
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
     if (!window.MergeSessionHistory) return null;
 
-    const simBtn = document.getElementById("betSheetSimulate50");
     let simBalance = balance;
     let lastBet = baseBetAmount;
 
-    if (simBtn) {
-      simBtn.disabled = true;
-    }
+    setBulkSimButtonsDisabled(true);
 
     window.MergeSessionHistory.clearActiveSession();
     clearSessionLog();
@@ -1848,23 +1917,67 @@
         simBalance = 1000;
       }
       const bet = pickRandomBetForBalance(simBalance);
-      simBalance = simulateOneSessionFast(simBalance, bet);
+      const result = simulateOneSessionFast(simBalance, bet, {
+        playMode: "random",
+      });
+      simBalance = result.balanceEnd;
       lastBet = bet;
-      if (simBtn) {
-        simBtn.textContent = "Играем… " + (i + 1) + "/" + count;
-      }
+      setBulkSimProgress("betSheetSimulate50", i + 1, count);
     }
 
     balance = simBalance;
     baseBetAmount = lastBet;
     resetSession();
     persistWalletState();
+    setBulkSimButtonsDisabled(false);
+    updateUI();
+    return simBalance;
+  }
 
-    if (simBtn) {
-      simBtn.disabled = false;
-      simBtn.textContent = "Сыграть 50 сессий";
+  function runBulkPashaSessions(count) {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
+    if (!window.MergeSessionHistory) return null;
+
+    let simBalance = balance;
+    let strategyBet = PASHA_DEFAULT_BET;
+    let playMode = "until_end";
+    let lastBet = PASHA_DEFAULT_BET;
+
+    setBulkSimButtonsDisabled(true);
+    window.MergeSessionHistory.clearActiveSession();
+    clearSessionLog();
+
+    for (let i = 0; i < count; i++) {
+      if (simBalance < MIN_BET) {
+        simBalance = 1000;
+      }
+      const bet = Math.min(
+        strategyBet,
+        Math.max(MIN_BET, Math.floor(simBalance))
+      );
+      const result = simulateOneSessionFast(simBalance, bet, {
+        playMode: playMode,
+        cashoutCoeffMin: PASHA_CASHOUT_COEFF,
+      });
+      simBalance = result.balanceEnd;
+      lastBet = bet;
+
+      if (result.outcome === "crash") {
+        strategyBet = PASHA_RECOVERY_BET;
+        playMode = "until_coeff_2";
+      } else if (result.win >= PASHA_WIN_RESET) {
+        strategyBet = PASHA_DEFAULT_BET;
+        playMode = "until_end";
+      }
+
+      setBulkSimProgress("betSheetSimulatePasha", i + 1, count);
     }
 
+    balance = simBalance;
+    baseBetAmount = lastBet;
+    resetSession();
+    persistWalletState();
+    setBulkSimButtonsDisabled(false);
     updateUI();
     return simBalance;
   }
@@ -3963,6 +4076,10 @@
   document.getElementById("betSheetSimulate50").addEventListener("click", function () {
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkRandomSessions(50);
+  });
+  document.getElementById("betSheetSimulatePasha").addEventListener("click", function () {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
+    runBulkPashaSessions(50);
   });
   betSheetBackdrop.addEventListener("click", function (e) {
     if (e.target === betSheetBackdrop) {
