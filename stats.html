@@ -493,7 +493,7 @@
     <div class="stats-list" id="statsList"></div>
   </div>
 
-  <script src="assets/session-history.js"></script>
+  <script src="assets/session-history.js?v=2"></script>
   <script>
     function formatMoney(v) {
       const n = Number(v);
@@ -528,12 +528,43 @@
       }
     }
 
+    function sortSessionsChronologically(sessions) {
+      return sessions.slice().sort(function (a, b) {
+        const na = Number(a.sessionNumber);
+        const nb = Number(b.sessionNumber);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) {
+          return na - nb;
+        }
+        return (Number(a.endedAt) || 0) - (Number(b.endedAt) || 0);
+      });
+    }
+
+    /** Итог = баланс после последней игры − баланс до первой (учитывает пополнения в симуляции). */
+    function computeBalanceNet(history, active) {
+      const list = Array.isArray(history) ? history : [];
+      if (!list.length && !active) return 0;
+
+      const sorted = sortSessionsChronologically(list);
+
+      let startBalance = 0;
+      if (sorted.length) {
+        startBalance = Number(sorted[0].balanceBefore) || 0;
+      } else if (active && active.sessionLog) {
+        startBalance = Number(active.sessionLog.balanceBefore) || 0;
+      }
+
+      let endBalance = 0;
+      if (active) {
+        endBalance = Number(active.balance) || 0;
+      } else if (sorted.length) {
+        endBalance = Number(sorted[sorted.length - 1].balanceEnd) || 0;
+      }
+
+      return endBalance - startBalance;
+    }
+
     function buildBalanceSeries(history, active) {
-      const sorted = history
-        .slice()
-        .sort(function (a, b) {
-          return a.sessionNumber - b.sessionNumber;
-        });
+      const sorted = sortSessionsChronologically(history);
       const points = sorted.map(function (session) {
         return {
           game: session.sessionNumber,
@@ -1030,7 +1061,7 @@
           agg.totalSessions > 0 ? agg.totalWagered / agg.totalSessions : 0;
         document.getElementById("summaryAvgBet").textContent =
           formatMoney(avgBet);
-        const net = agg.totalWon - agg.totalWagered;
+        const net = computeBalanceNet(history, active);
         const netEl = document.getElementById("summaryNet");
         netEl.textContent = formatMoney(net);
         netEl.style.color = net >= 0 ? "#24f49d" : "#f87171";
