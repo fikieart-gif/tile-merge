@@ -7,9 +7,30 @@
   <title>MergeMoney 5-Stage + Bonus Tile</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- Версия query — в синх с TILE_ASSET_VERSION в скрипте и с merge-flight.js ниже -->
-  <link rel="stylesheet" href="assets/merge-animations.css?v=71" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+  <!-- Версия query — в синх с TILE_ASSET_VERSION в скрипте (сейчас 74) -->
+  <link rel="preload" href="assets/merge-animations.css?v=74" as="style" fetchpriority="high" />
+  <link rel="preload" href="assets/js/merge-flight.js?v=74" as="script" fetchpriority="high" />
+  <link rel="preload" href="assets/tiles/tile-1-plate.png?v=74" as="image" media="(min-width: 481px)" fetchpriority="high" />
+  <link rel="preload" href="assets/tiles/tile-1-emblem.png?v=74" as="image" media="(min-width: 481px)" fetchpriority="high" />
+  <link rel="preload" href="assets/tiles/tile-2-plate.png?v=74" as="image" media="(min-width: 481px)" />
+  <link rel="preload" href="assets/tiles/tile-2-emblem.png?v=74" as="image" media="(min-width: 481px)" />
+  <link rel="preload" href="assets/tiles/mobile/tile-1-plate.png?v=74" as="image" media="(max-width: 480px)" fetchpriority="high" />
+  <link rel="preload" href="assets/tiles/mobile/tile-1-emblem.png?v=74" as="image" media="(max-width: 480px)" fetchpriority="high" />
+  <link rel="preload" href="assets/tiles/mobile/tile-2-plate.png?v=74" as="image" media="(max-width: 480px)" />
+  <link rel="preload" href="assets/tiles/mobile/tile-2-emblem.png?v=74" as="image" media="(max-width: 480px)" />
+  <link rel="stylesheet" href="assets/merge-animations.css?v=74" />
   <style>
     * {
       box-sizing: border-box;
@@ -1732,9 +1753,9 @@
 </div>
 </div>
 
-<script src="assets/game-math.js?v=3"></script>
+<script src="assets/game-math.js?v=4"></script>
 <script src="assets/session-history.js?v=2"></script>
-<script src="assets/js/merge-flight.js?v=71"></script>
+<script src="assets/js/merge-flight.js?v=74"></script>
 <script>
   let MAX_LEVEL, MIN_BET, TILE_CRASH, TILE_BONUS, BONUS_TILE_COEFF, COEFF_BY_LEVEL;
   let getCurrentStage, pickTileForEmptyCell, applyGravityWithSpawnMask, calcRoundCoeff;
@@ -2438,7 +2459,7 @@
    * Версия для query тайлов и бандла анимаций. При изменении поднимите также в head:
    * link merge-animations.css?v=… и script merge-flight.js?v=…
    */
-  const TILE_ASSET_VERSION = "73";
+  const TILE_ASSET_VERSION = "74";
   /**
    * Узкий экран: те же имена файлов в assets/tiles/mobile/ (см. @media max-width ниже в <style>).
    */

@@ -62,6 +62,8 @@
 
   function createMathProfile(config) {
     const COEFF_BY_LEVEL = buildCoeffByLevel(config.c1, config.g);
+    const bonusTileCoeff =
+      config.bonusTileCoeff != null ? config.bonusTileCoeff : BONUS_TILE_COEFF;
     const stageThresholds = config.stageThresholds.slice();
     const alphaStages = config.alphaStages.slice();
 
@@ -125,7 +127,7 @@
         const l = levels[i];
         if (!l || l === TILE_CRASH) continue;
         if (l === TILE_BONUS) {
-          sum += BONUS_TILE_COEFF;
+          sum += bonusTileCoeff;
         } else {
           sum += COEFF_BY_LEVEL[l] || 0;
         }
@@ -152,7 +154,7 @@
       TILE_CRASH: TILE_CRASH,
       TILE_BONUS: TILE_BONUS,
       CRASH_MULT: CRASH_MULT,
-      BONUS_TILE_COEFF: BONUS_TILE_COEFF,
+      BONUS_TILE_COEFF: bonusTileCoeff,
       COEFF_BY_LEVEL: COEFF_BY_LEVEL,
       getCurrentStage: getCurrentStage,
       pickTileForEmptyCell: pickTileForEmptyCell,
@@ -214,6 +216,7 @@
     label: "Math4",
     c1: 0.02798,
     g: 1.23261,
+    bonusTileCoeff: 0.91015,
     stageThresholds: [0.17750, 0.49775, 1.550775],
     alphaStages: [0.70028, 0.18708, 0.73031, 0.10306],
     factorsBelowOne: { existing: 0.25013, new: 4.32571 },
@@ -228,12 +231,15 @@
       } else {
         prob = BOMB_P;
       }
-      if (roundNumber === 4) prob *= 1.1;
+      if (roundNumber === 4) prob *= 1.2;
+      if (roundNumber === 5) prob *= 0.9;
+      if (roundNumber === 6) prob *= 0.91;
       if (bonusAlreadyAppeared) prob *= 1.5;
       return prob;
     },
     computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
-      let prob = 0.00518;
+      const BONUS_P = 0.00518;
+      let prob = BONUS_P;
       if (roundNumber <= 2) prob *= 0.1;
       if (bonusAlreadyAppeared) prob *= 0.1;
       return prob;
