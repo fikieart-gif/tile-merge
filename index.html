@@ -1753,8 +1753,8 @@
 </div>
 </div>
 
-<script src="assets/game-math.js?v=4"></script>
-<script src="assets/session-history.js?v=2"></script>
+<script src="assets/game-math.js?v=74"></script>
+<script src="assets/session-history.js?v=74"></script>
 <script src="assets/js/merge-flight.js?v=74"></script>
 <script>
   let MAX_LEVEL, MIN_BET, TILE_CRASH, TILE_BONUS, BONUS_TILE_COEFF, COEFF_BY_LEVEL;
@@ -1841,6 +1841,16 @@
     }
   }
 
+  function resolveStoredMathProfile() {
+    try {
+      const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
+      if (stored === "math2" || stored === "math3" || stored === "math4") {
+        return stored;
+      }
+    } catch (e) {}
+    return null;
+  }
+
   function restoreActiveGameState() {
     if (!window.MergeSessionHistory) return false;
     restoreWalletState();
@@ -1862,19 +1872,20 @@
         stepCoeffs: saved.sessionLog.stepCoeffs.slice(),
         profile: saved.sessionLog.profile,
       };
-      const sessionProfile = saved.sessionLog.profile;
-      if (
-        sessionProfile &&
-        window.MergeGameMath.setActiveProfile(sessionProfile)
-      ) {
-        bindMathApi(window.MergeGameMath);
-        updateMathProfileButtons(sessionProfile);
-        try {
-          localStorage.setItem(MATH_PROFILE_STORAGE_KEY, sessionProfile);
-        } catch (e) {}
-      }
     } else {
       currentSessionLog = null;
+    }
+
+    const sessionProfile =
+      (saved.sessionLog && saved.sessionLog.profile) ||
+      resolveStoredMathProfile() ||
+      window.MergeGameMath.getActiveProfileId();
+    if (window.MergeGameMath.setActiveProfile(sessionProfile)) {
+      bindMathApi(window.MergeGameMath);
+      updateMathProfileButtons(sessionProfile);
+      try {
+        localStorage.setItem(MATH_PROFILE_STORAGE_KEY, sessionProfile);
+      } catch (e) {}
     }
     isAnimating = false;
     pendingWin = 0;
@@ -2439,11 +2450,7 @@
   }
 
   (function initMathProfile() {
-    let saved = "math3";
-    try {
-      const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
-      if (stored === "math2" || stored === "math3" || stored === "math4") saved = stored;
-    } catch (e) {}
+    let saved = resolveStoredMathProfile() || "math3";
     if (!window.MergeGameMath.setActiveProfile(saved)) {
       saved = window.MergeGameMath.getActiveProfileId();
     }
@@ -2456,8 +2463,10 @@
   /** Базовая ставка сессии; задаётся стартовым листом или по умолчанию 10. */
   let baseBetAmount = 10;
   /**
-   * Версия для query тайлов и бандла анимаций. При изменении поднимите также в head:
-   * link merge-animations.css?v=… и script merge-flight.js?v=…
+   * Версия для query тайлов, анимаций и скриптов (game-math, session-history).
+   * При изменении поднимите также в head:
+   * link merge-animations.css?v=…, script merge-flight.js?v=…,
+   * game-math.js?v=… и session-history.js?v=…
    */
   const TILE_ASSET_VERSION = "74";
   /**

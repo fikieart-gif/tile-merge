@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Симуляция сессий</title>
+  <style>
+    body {
+      margin: 24px;
+      font-family: system-ui, sans-serif;
+      background: #131317;
+      color: #dfdfea;
+    }
+    pre { white-space: pre-wrap; line-height: 1.5; }
+    .ok { color: #24f49d; }
+  </style>
+</head>
+<body>
+  <h1>Симуляция сессий</h1>
+  <pre id="log">Запуск…</pre>
+  <script src="../assets/game-math.js"></script>
+  <script src="../assets/session-history.js"></script>
+  <script>
+    (function () {
+      const math = window.MergeGameMath;
+      const history = window.MergeSessionHistory;
+      const TILE_CRASH = math.TILE_CRASH;
+      const TILE_BONUS = math.TILE_BONUS;
+      const SESSION_COUNT = Number(new URLSearchParams(location.search).get("n")) || 50;
+      const BET = Number(new URLSearchParams(location.search).get("bet")) || 10;
+      const PROFILES = ["math2", "math3", "math4"];
+      const logEl = document.getElementById("log");
+
+      function processMergeChainSync(levels, coeffBase) {
+        let grid = levels.slice();
+        while (true) {
+          const pairs = math.findPairs(grid);
+          if (!pairs.length) {
+            return { grid: grid, totalCoeff: coeffBase + math.calcRoundCoeff(grid) };
+          }
+          grid = math.mergeLevelsFromPairs(grid, [pairs[0]]);
+        }
+      }
+
+      function playStep(state) {
+        const stage = math.getCurrentStage(state.totalCoeff);
+        const levels = state.grid.slice();
+        const spawnMask = new Array(9).fill(false);
+        let bonusTileAppeared = state.bonusTileAppeared;
+        let crashSpawned = false;
+
+        for (let i = 0; i < 9; i++) {
+          if (crashSpawned) continue;
+          if (levels[i] === 0) {
+            const tile = math.pickTileForEmptyCell(
+              stage, levels, bonusTileAppeared, state.totalCoeff, state.roundIndex
+            );
+            if (tile === TILE_BONUS) bonusTileAppeared = true;
+            if (tile === TILE_CRASH) crashSpawned = true;
+            levels[i] = tile;
+            spawnMask[i] = true;
+          }
+        }
+
+        if (levels.some(function (l) { return l === TILE_CRASH; })) {
+          return { kind: "crash", coeff: state.totalCoeff, bonusTileAppeared: bonusTileAppeared };
+        }
+
+        const fallen = math.applyGravityWithSpawnMask(levels, spawnMask).grid;
+        const merged = processMergeChainSync(fallen, state.totalCoeff);
+        const step = { round: state.roundIndex, coeff: Math.round(merged.totalCoeff * 100) / 100 };
+
+        if (math.isGridFullNoPairs(merged.grid)) {
+          return {
+            kind: "no_pairs",
+            grid: merged.grid,
+            totalCoeff: merged.totalCoeff,
+            step: step,
+            bonusTileAppeared: bonusTileAppeared,
+            win: state.sessionBet * merged.totalCoeff,
+          };
+        }
+
+        return {
+          kind: "continue",
+          grid: merged.grid,
+          totalCoeff: merged.totalCoeff,
+          step: step,
+          bonusTileAppeared: bonusTileAppeared,
+        };
+      }
+
+      function shouldRandomCashout(roundIndex, totalCoeff) {
+        if (totalCoeff <= 0) return false;
+        return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
+      }
+
+      function simulateSession(balance, bet, profileId) {
+        math.setActiveProfile(profileId);
+        const balanceBefore = balance;
+        balance -= bet;
+        const sessionLog = { balanceBefore: balanceBefore, bet: bet, stepCoeffs: [], profile: profileId };
+        const state = {
+          grid: new Array(9).fill(0),
+          totalCoeff: 0,
+          roundIndex: 0,
+          sessionBet: bet,
+          bonusTileAppeared: false,
+        };
+        let outcome = "unknown";
+        let win = 0;
+        let finalCoeff = 0;
+
+        while (true) {
+          state.roundIndex += 1;
+          const result = playStep(state);
+
+          if (result.kind === "crash") {
+            outcome = "crash";
+            finalCoeff = result.coeff;
+            sessionLog.stepCoeffs.push({
+              round: state.roundIndex,
+              coeff: Math.round(result.coeff * 100) / 100,
+              crash: true,
+            });
+            break;
+          }
+
+          sessionLog.stepCoeffs.push(result.step);
+          state.grid = result.grid;
+          state.totalCoeff = result.totalCoeff;
+          state.bonusTileAppeared = result.bonusTileAppeared;
+
+          if (result.kind === "no_pairs") {
+            outcome = "no_pairs";
+            win = result.win;
+            finalCoeff = result.totalCoeff;
+            balance += win;
+            break;
+          }
+
+          if (shouldRandomCashout(state.roundIndex, state.totalCoeff) || state.roundIndex >= 40) {
+            outcome = "cashout";
+            finalCoeff = state.totalCoeff;
+            win = state.sessionBet * state.totalCoeff;
+            balance += win;
+            break;
+          }
+        }
+
+        history.recordSession({
+          balanceBefore: sessionLog.balanceBefore,
+          balanceEnd: balance,
+          bet: bet,
+          win: win,
+          finalCoeff: finalCoeff,
+          outcome: outcome,
+          profile: profileId,
+          stepCoeffs: sessionLog.stepCoeffs,
+          endedAt: Date.now(),
+        });
+        history.saveWallet({ balance: balance, baseBetAmount: bet });
+        return { outcome: outcome, win: win, finalCoeff: finalCoeff, balance: balance, rounds: sessionLog.stepCoeffs.length };
+      }
+
+      history.clearAll();
+      let balance = 1000;
+      const results = [];
+      const byOutcome = { cashout: 0, crash: 0, no_pairs: 0 };
+
+      for (let i = 0; i < SESSION_COUNT; i++) {
+        if (balance < BET) balance = 1000;
+        const profileId = PROFILES[Math.floor(Math.random() * PROFILES.length)];
+        const session = simulateSession(balance, BET, profileId);
+        balance = session.balance;
+        results.push(session);
+        byOutcome[session.outcome] = (byOutcome[session.outcome] || 0) + 1;
+      }
+
+      const agg = history.loadAggregates();
+      const lines = [
+        "Готово: " + SESSION_COUNT + " сессий записаны в localStorage.",
+        "",
+        "Итоговый баланс: $" + balance.toFixed(2),
+        "Кэшаут: " + byOutcome.cashout + " | Бомба: " + byOutcome.crash + " | Нет пар: " + byOutcome.no_pairs,
+        "Средний x: x" + (agg.sumCoeff / agg.totalSessions).toFixed(2),
+        "Средний шаг: " + (agg.sumRounds / agg.totalSessions).toFixed(1),
+        "Итог: $" + (agg.totalWon - agg.totalWagered).toFixed(2),
+        "",
+        "Откройте stats.html или index.html на этом же origin — статистика уже там.",
+      ];
+      logEl.innerHTML = '<span class="ok">' + lines.join("\n") + "</span>";
+    })();
+  </script>
+</body>
+</html>

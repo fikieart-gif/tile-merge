@@ -493,7 +493,7 @@
     <div class="stats-list" id="statsList"></div>
   </div>
 
-  <script src="assets/session-history.js?v=2"></script>
+  <script src="assets/session-history.js?v=74"></script>
   <script>
     function formatMoney(v) {
       const n = Number(v);
@@ -793,9 +793,6 @@
     }
 
     function stepsCount(session) {
-      if (session.isActive && session.roundIndex != null) {
-        return session.roundIndex;
-      }
       return session.stepCoeffs && session.stepCoeffs.length
         ? session.stepCoeffs.length
         : 0;
