@@ -104,7 +104,7 @@
       win: Number(record.win) || 0,
       finalCoeff: Number(record.finalCoeff) || 0,
       outcome: record.outcome || "unknown",
-      profile: record.profile || "math3",
+      profile: record.profile || "math4",
       stepCoeffs: stepCoeffs.map(function (step) {
         return {
           round: Number(step.round) || 0,
@@ -176,7 +176,7 @@
       sessionLog: {
         balanceBefore: Number(sessionLog.balanceBefore) || 0,
         bet: Number(sessionLog.bet) || Number(state.sessionBet) || 0,
-        profile: sessionLog.profile || "math3",
+        profile: sessionLog.profile || "math4",
         stepCoeffs: stepCoeffs.map(function (step) {
           return {
             round: Number(step.round) || 0,

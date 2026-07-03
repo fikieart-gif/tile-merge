@@ -738,9 +738,12 @@
     }
 
     function formatProfileLabel(profile) {
-      if (profile === "math2") return "Math2";
-      if (profile === "math4") return "Math4";
-      return "Math3";
+      if (profile === "math4") return "Easy";
+      if (profile === "normal1") return "Normal1";
+      if (profile === "normal2") return "Normal2";
+      if (profile === "normal3") return "Normal3";
+      if (profile === "math2" || profile === "math3") return "Easy";
+      return "Easy";
     }
 
     function coeffToneClass(value) {
@@ -814,7 +817,7 @@
         win: bet * coeff,
         finalCoeff: coeff,
         outcome: "active",
-        profile: log.profile || "math3",
+        profile: log.profile || "math4",
         stepCoeffs: stepCoeffs,
         endedAt: active.savedAt || Date.now(),
         roundIndex: Number(active.roundIndex) || 0,

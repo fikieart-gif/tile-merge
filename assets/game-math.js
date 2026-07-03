@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Math2 / Math3 / Math4 — переключение через setActiveProfile().
+ * Профили Easy / Normal1 / Normal2 / Normal3 — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -121,7 +121,6 @@
     }
 
     function calcRoundCoeff(levels) {
-      /* Суммарный множитель = сумма вкладов всех тайлов на поле после шага. */
       let sum = 0;
       for (let i = 0; i < levels.length; i++) {
         const l = levels[i];
@@ -163,57 +162,111 @@
     };
   }
 
-  const MATH3 = createMathProfile({
-    id: "math3",
-    label: "Math3",
-    c1: 0.02798,
-    g: 1.20661,
-    stageThresholds: [0.17750, 0.49775, 1.70775],
-    alphaStages: [0.70028, 0.18708, 0.73031, 0.13306],
-    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
-    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
-    computeBombProb: function (totalCoeff, roundNumber) {
-      const BOMB_P = 0.09128;
-      if (totalCoeff < 0.8) {
-        let prob = BOMB_P * 0.093;
-        if (roundNumber === 1) prob *= 0.1;
-        return prob;
-      }
-      return BOMB_P;
-    },
-    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
-      let prob = 0.00678;
+  function computeEasyBombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.09128;
+    let prob;
+    if (totalCoeff < 0.8) {
+      prob = BOMB_P * 0.093;
       if (roundNumber === 1) prob *= 0.1;
-      if (bonusAlreadyAppeared) prob *= 0.1;
-      return prob;
-    },
-  });
+      if (bonusAlreadyAppeared) prob *= 7.0;
+    } else {
+      prob = BOMB_P;
+    }
+    if (roundNumber === 4) prob *= 1.2;
+    if (roundNumber === 5) prob *= 0.9;
+    if (roundNumber === 6) prob *= 0.91;
+    if (bonusAlreadyAppeared) prob *= 1.5;
+    return prob;
+  }
 
-  const MATH2 = createMathProfile({
-    id: "math2",
-    label: "Math2",
-    c1: 0.03633,
-    g: 1.15219,
-    stageThresholds: [0.16308, 0.52254],
-    alphaStages: [0.68339, 0.18043, 0.60533],
-    factorsBelowOne: { existing: 0.26814, new: 4.98947 },
-    factorsAboveOne: { existing: 0.44646, new: 3.14095 },
-    computeBombProb: function (totalCoeff) {
-      const BOMB_P = 0.07940;
-      if (totalCoeff < 1.0) return BOMB_P * 0.089;
-      return BOMB_P;
-    },
-    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
-      let prob = 0.00616;
-      if (roundNumber <= 2) prob *= 0.1;
-      if (bonusAlreadyAppeared) prob *= 0.1;
-      return prob;
-    },
-  });
+  function computeEasyBonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00518;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.1;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
 
-  const MATH4 = createMathProfile({
-    id: "math4",
-    label: "Math4",
+  function computeNormal1BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.128;
+    let prob;
+    if (totalCoeff < 0.6) {
+      prob = BOMB_P * 0.11;
+      if (roundNumber === 1) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 7.0;
+    } else {
+      prob = BOMB_P;
+    }
+    if (roundNumber === 3) prob *= 0.75;
+    if (roundNumber === 4) prob *= 0.8;
+    if (roundNumber === 5) prob *= 0.8;
+    if (roundNumber === 6) prob *= 0.7;
+    if (bonusAlreadyAppeared) prob *= 1.5;
+    return prob;
+  }
+
+  function computeNormal1BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00518;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.2;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
+
+  function computeNormal2BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.128;
+    let prob;
+    if (totalCoeff < 0.8) {
+      prob = BOMB_P * 0.093;
+      if (roundNumber === 1) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 7.0;
+    } else {
+      prob = BOMB_P;
+    }
+    if (roundNumber === 3) prob *= 1.8;
+    if (roundNumber === 4) prob *= 0.8;
+    if (roundNumber === 5) prob *= 0.7;
+    if (roundNumber === 6) prob *= 0.8;
+    if (bonusAlreadyAppeared) prob *= 1.5;
+    return prob;
+  }
+
+  function computeNormal2BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00518;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.1;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
+
+  function computeNormal3BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.105;
+    let prob;
+    if (totalCoeff < 0.8) {
+      prob = BOMB_P * 0.093;
+      if (roundNumber === 1) prob *= 0.1;
+      if (bonusAlreadyAppeared) prob *= 7.0;
+    } else {
+      prob = BOMB_P;
+    }
+    if (roundNumber === 3) prob *= 2.3;
+    if (roundNumber === 4) prob *= 1.2;
+    if (roundNumber === 5) prob *= 0.9;
+    if (roundNumber === 6) prob *= 0.6;
+    if (bonusAlreadyAppeared) prob *= 1.5;
+    return prob;
+  }
+
+  function computeNormal3BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00664;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.1;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
+
+  /** База Easy (бывш. Math4). */
+  const EASY_PROFILE_SPEC = {
     c1: 0.02798,
     g: 1.23261,
     bonusTileCoeff: 0.91015,
@@ -221,30 +274,58 @@
     alphaStages: [0.70028, 0.18708, 0.73031, 0.10306],
     factorsBelowOne: { existing: 0.25013, new: 4.32571 },
     factorsAboveOne: { existing: 0.30802, new: 2.86874 },
-    computeBombProb: function (totalCoeff, roundNumber, bonusAlreadyAppeared) {
-      const BOMB_P = 0.09128;
-      let prob;
-      if (totalCoeff < 0.8) {
-        prob = BOMB_P * 0.093;
-        if (roundNumber === 1) prob *= 0.1;
-        if (bonusAlreadyAppeared) prob *= 7.0;
-      } else {
-        prob = BOMB_P;
-      }
-      if (roundNumber === 4) prob *= 1.2;
-      if (roundNumber === 5) prob *= 0.9;
-      if (roundNumber === 6) prob *= 0.91;
-      if (bonusAlreadyAppeared) prob *= 1.5;
-      return prob;
-    },
-    computeBonusProb: function (roundNumber, bonusAlreadyAppeared) {
-      const BONUS_P = 0.00518;
-      let prob = BONUS_P;
-      if (roundNumber <= 2) prob *= 0.1;
-      if (bonusAlreadyAppeared) prob *= 0.1;
-      return prob;
-    },
-  });
+    computeBombProb: computeEasyBombProb,
+    computeBonusProb: computeEasyBonusProb,
+  };
+
+  const NORMAL1_PROFILE_SPEC = {
+    c1: 0.03593,
+    g: 1.25261,
+    bonusTileCoeff: 1.19478,
+    stageThresholds: [0.17750, 0.49775, 1.550775],
+    alphaStages: [0.70028, 0.44271, 0.44503, 0.05306],
+    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
+    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
+    computeBombProb: computeNormal1BombProb,
+    computeBonusProb: computeNormal1BonusProb,
+  };
+
+  const NORMAL2_PROFILE_SPEC = {
+    c1: 0.03593,
+    g: 1.25261,
+    bonusTileCoeff: 1.19478,
+    stageThresholds: [0.17750, 0.49775, 1.550775],
+    alphaStages: [0.70028, 0.20708, 0.73031, 0.10306],
+    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
+    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
+    computeBombProb: computeNormal2BombProb,
+    computeBonusProb: computeNormal2BonusProb,
+  };
+
+  const NORMAL3_PROFILE_SPEC = {
+    c1: 0.03593,
+    g: 1.19027,
+    bonusTileCoeff: 1.19478,
+    stageThresholds: [0.16440, 0.76306, 2.450775],
+    alphaStages: [0.57668, 0.13227, 0.89247, 0.10247],
+    factorsBelowOne: { existing: 0.28030, new: 4.76367 },
+    factorsAboveOne: { existing: 0.44883, new: 2.90653 },
+    computeBombProb: computeNormal3BombProb,
+    computeBonusProb: computeNormal3BonusProb,
+  };
+
+  const EASY = createMathProfile(
+    Object.assign({ id: "math4", label: "Easy" }, EASY_PROFILE_SPEC)
+  );
+  const NORMAL1 = createMathProfile(
+    Object.assign({ id: "normal1", label: "Normal1" }, NORMAL1_PROFILE_SPEC)
+  );
+  const NORMAL2 = createMathProfile(
+    Object.assign({ id: "normal2", label: "Normal2" }, NORMAL2_PROFILE_SPEC)
+  );
+  const NORMAL3 = createMathProfile(
+    Object.assign({ id: "normal3", label: "Normal3" }, NORMAL3_PROFILE_SPEC)
+  );
 
   function applyGravityWithSpawnMask(levels, spawnMask) {
     const mask = spawnMask || new Array(9).fill(false);
@@ -320,7 +401,6 @@
     Object.keys(positionsByLevel)
       .map(function (k) { return parseInt(k, 10); })
       .filter(function (n) { return !Number.isNaN(n); })
-      .sort(function (a, b) { return a - b; })
       .forEach(function (lv) {
         const arr = positionsByLevel[lv];
         if (!arr) return;
@@ -346,12 +426,13 @@
   }
 
   const profiles = {
-    math2: MATH2,
-    math3: MATH3,
-    math4: MATH4,
+    math4: EASY,
+    normal1: NORMAL1,
+    normal2: NORMAL2,
+    normal3: NORMAL3,
   };
 
-  let activeProfileId = "math3";
+  let activeProfileId = "math4";
 
   function sharedApi() {
     return {
@@ -374,5 +455,5 @@
     };
   }
 
-  global.MergeGameMath = Object.assign({}, MATH3, sharedApi());
+  global.MergeGameMath = Object.assign({}, EASY, sharedApi());
 })(typeof window !== "undefined" ? window : globalThis);

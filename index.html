@@ -355,7 +355,7 @@
       --app-footer-clearance: 76px;
       /* Зазор между кнопкой «СТАРТ» и верхом футера. */
       --bet-sheet-footer-gap: 20px;
-      /* Резерв под ряд Math2/Math3 — лист ставки не должен на него наезжать. */
+      /* Резерв под ряд профилей математики — лист ставки не должен на него наезжать. */
       --math-profile-bar-height: 44px;
       --math-profile-bar-gap: 0px;
       --math-profile-bar-clearance: var(--math-profile-bar-height);
@@ -1745,15 +1745,16 @@
 
   <div class="math-profile-bar">
     <div class="math-profile-switch" role="group" aria-label="Вариант математики">
-      <button type="button" class="math-profile-btn" id="mathProfileMath3" data-profile="math3" aria-pressed="false">Math3</button>
-      <button type="button" class="math-profile-btn" id="mathProfileMath2" data-profile="math2" aria-pressed="false">Math2</button>
-      <button type="button" class="math-profile-btn" id="mathProfileMath4" data-profile="math4" aria-pressed="false">Math4</button>
+      <button type="button" class="math-profile-btn" id="mathProfileEasy" data-profile="math4" aria-pressed="false">Easy</button>
+      <button type="button" class="math-profile-btn" id="mathProfileNormal1" data-profile="normal1" aria-pressed="false">Normal1</button>
+      <button type="button" class="math-profile-btn" id="mathProfileNormal2" data-profile="normal2" aria-pressed="false">Normal2</button>
+      <button type="button" class="math-profile-btn" id="mathProfileNormal3" data-profile="normal3" aria-pressed="false">Normal3</button>
     </div>
   </div>
 </div>
 </div>
 
-<script src="assets/game-math.js?v=74"></script>
+<script src="assets/game-math.js?v=78"></script>
 <script src="assets/session-history.js?v=74"></script>
 <script src="assets/js/merge-flight.js?v=74"></script>
 <script>
@@ -1841,12 +1842,18 @@
     }
   }
 
+  const MATH_PROFILE_IDS = ["math4", "normal1", "normal2", "normal3"];
+
+  function normalizeMathProfileId(profileId) {
+    if (profileId === "math2" || profileId === "math3") return "math4";
+    return MATH_PROFILE_IDS.indexOf(profileId) >= 0 ? profileId : null;
+  }
+
   function resolveStoredMathProfile() {
     try {
       const stored = localStorage.getItem(MATH_PROFILE_STORAGE_KEY);
-      if (stored === "math2" || stored === "math3" || stored === "math4") {
-        return stored;
-      }
+      const normalized = normalizeMathProfileId(stored);
+      if (normalized) return normalized;
     } catch (e) {}
     return null;
   }
@@ -1877,7 +1884,7 @@
     }
 
     const sessionProfile =
-      (saved.sessionLog && saved.sessionLog.profile) ||
+      normalizeMathProfileId(saved.sessionLog && saved.sessionLog.profile) ||
       resolveStoredMathProfile() ||
       window.MergeGameMath.getActiveProfileId();
     if (window.MergeGameMath.setActiveProfile(sessionProfile)) {
@@ -1996,7 +2003,7 @@
     random: {
       title: "50 рандомных сессий",
       text:
-        "Быстро прогоняет 50 игр по выбранной математике (Math2/Math3/Math4).\n\n" +
+        "Быстро прогоняет 50 игр по выбранной математике (Easy/Normal1–3).\n\n" +
         "В каждой сессии ставка случайная — от MIN до текущего баланса. " +
         "Исход решается наугад: кэшаут, бомба или «нет пар».\n\n" +
         "Все результаты сохраняются в статистику.",
@@ -2004,7 +2011,7 @@
     pasha: {
       title: "Стратегия Паши",
       text:
-        "50 сессий по выбранной математике (Math2/Math3/Math4) и фиксированным правилам:\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal1–3) и фиксированным правилам:\n\n" +
         "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
         "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
         "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.",
@@ -2012,7 +2019,7 @@
     aleksey: {
       title: "Стратегия Алексея",
       text:
-        "50 сессий по выбранной математике (Math2/Math3/Math4) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal1–3) и ставке с листа.\n\n" +
         "Играем, пока не наберём x1.5 или выше.\n" +
         "Как только x ≥ 1.5 — смотрим пустые клетки в конце раунда:\n" +
         "• больше 2 пустых — кэшаут;\n" +
@@ -2021,7 +2028,7 @@
     x1: {
       title: "Вывод при >= x1",
       text:
-        "50 сессий по выбранной математике (Math2/Math3/Math4) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal1–3) и ставке с листа.\n\n" +
         "Играем до x1 и выше, затем сразу кэшаут. " +
         "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.",
     },
@@ -2450,7 +2457,7 @@
   }
 
   (function initMathProfile() {
-    let saved = resolveStoredMathProfile() || "math3";
+    let saved = resolveStoredMathProfile() || "math4";
     if (!window.MergeGameMath.setActiveProfile(saved)) {
       saved = window.MergeGameMath.getActiveProfileId();
     }
@@ -4456,14 +4463,17 @@
   }
 
   stepButton.addEventListener("click", playRound);
-  document.getElementById("mathProfileMath3").addEventListener("click", function () {
-    switchMathProfile("math3");
-  });
-  document.getElementById("mathProfileMath2").addEventListener("click", function () {
-    switchMathProfile("math2");
-  });
-  document.getElementById("mathProfileMath4").addEventListener("click", function () {
+  document.getElementById("mathProfileEasy").addEventListener("click", function () {
     switchMathProfile("math4");
+  });
+  document.getElementById("mathProfileNormal1").addEventListener("click", function () {
+    switchMathProfile("normal1");
+  });
+  document.getElementById("mathProfileNormal2").addEventListener("click", function () {
+    switchMathProfile("normal2");
+  });
+  document.getElementById("mathProfileNormal3").addEventListener("click", function () {
+    switchMathProfile("normal3");
   });
   if (settingsButton) {
     settingsButton.addEventListener("click", function () {

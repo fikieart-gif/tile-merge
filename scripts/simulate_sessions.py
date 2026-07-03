@@ -84,70 +84,127 @@ class MathProfile:
         return total
 
 
-PROFILES = {
-    "math3": MathProfile(
-        {
-            "id": "math3",
-            "c1": 0.02798,
-            "g": 1.20661,
-            "stage_thresholds": [0.17750, 0.49775, 1.70775],
-            "alpha_stages": [0.70028, 0.18708, 0.73031, 0.13306],
-            "factors_below": {"existing": 0.25013, "new": 4.32571},
-            "factors_above": {"existing": 0.30802, "new": 2.86874},
-            "bomb_prob": lambda tc, rn, seen=False: (
-                0.09128 * 0.093 * (0.1 if rn == 1 else 1.0)
+def easy_profile_cfg(profile_id):
+    """Easy (math4)."""
+    return {
+        "id": profile_id,
+        "c1": 0.02798,
+        "g": 1.23261,
+        "bonus_tile_coeff": 0.91015,
+        "stage_thresholds": [0.17750, 0.49775, 1.550775],
+        "alpha_stages": [0.70028, 0.18708, 0.73031, 0.10306],
+        "factors_below": {"existing": 0.25013, "new": 4.32571},
+        "factors_above": {"existing": 0.30802, "new": 2.86874},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (1.2 if rn == 4 else 1.0)
+                * (0.9 if rn == 5 else 1.0)
+                * (0.91 if rn == 6 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.09128 * 0.093 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
                 if tc < 0.8
                 else 0.09128
-            ),
-            "bonus_prob": lambda rn, seen: 0.00678
-            * (0.1 if rn == 1 else 1.0)
-            * (0.1 if seen else 1.0),
-        }
-    ),
-    "math2": MathProfile(
-        {
-            "id": "math2",
-            "c1": 0.03633,
-            "g": 1.15219,
-            "stage_thresholds": [0.16308, 0.52254],
-            "alpha_stages": [0.68339, 0.18043, 0.60533],
-            "factors_below": {"existing": 0.26814, "new": 4.98947},
-            "factors_above": {"existing": 0.44646, "new": 3.14095},
-            "bomb_prob": lambda tc, rn, seen=False: (
-                0.07940 * 0.089 if tc < 1.0 else 0.07940
-            ),
-            "bonus_prob": lambda rn, seen: 0.00616
-            * (0.1 if rn <= 2 else 1.0)
-            * (0.1 if seen else 1.0),
-        }
-    ),
-    "math4": MathProfile(
-        {
-            "id": "math4",
-            "c1": 0.02798,
-            "g": 1.23261,
-            "bonus_tile_coeff": 0.91015,
-            "stage_thresholds": [0.17750, 0.49775, 1.550775],
-            "alpha_stages": [0.70028, 0.18708, 0.73031, 0.10306],
-            "factors_below": {"existing": 0.25013, "new": 4.32571},
-            "factors_above": {"existing": 0.30802, "new": 2.86874},
-            "bomb_prob": lambda tc, rn, seen=False: (
-                (lambda p: (
-                    p * (1.2 if rn == 4 else 1.0)
-                    * (0.9 if rn == 5 else 1.0)
-                    * (0.91 if rn == 6 else 1.0)
-                    * (1.5 if seen else 1.0)
-                ))(
-                    0.09128 * 0.093 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
-                    if tc < 0.8
-                    else 0.09128
-                )
-            ),
-            "bonus_prob": lambda rn, seen: 0.00518
-            * (0.1 if rn <= 2 else 1.0)
-            * (0.1 if seen else 1.0),
-        }
-    ),
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00518
+        * (0.1 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
+def normal1_profile_cfg():
+    return {
+        "id": "normal1",
+        "c1": 0.03593,
+        "g": 1.25261,
+        "bonus_tile_coeff": 1.19478,
+        "stage_thresholds": [0.17750, 0.49775, 1.550775],
+        "alpha_stages": [0.70028, 0.44271, 0.44503, 0.05306],
+        "factors_below": {"existing": 0.25013, "new": 4.32571},
+        "factors_above": {"existing": 0.30802, "new": 2.86874},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (0.75 if rn == 3 else 1.0)
+                * (0.8 if rn == 4 else 1.0)
+                * (0.8 if rn == 5 else 1.0)
+                * (0.7 if rn == 6 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.128 * 0.11 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                if tc < 0.6
+                else 0.128
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00518
+        * (0.2 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
+def normal2_profile_cfg():
+    return {
+        "id": "normal2",
+        "c1": 0.03593,
+        "g": 1.25261,
+        "bonus_tile_coeff": 1.19478,
+        "stage_thresholds": [0.17750, 0.49775, 1.550775],
+        "alpha_stages": [0.70028, 0.20708, 0.73031, 0.10306],
+        "factors_below": {"existing": 0.25013, "new": 4.32571},
+        "factors_above": {"existing": 0.30802, "new": 2.86874},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (1.8 if rn == 3 else 1.0)
+                * (0.8 if rn == 4 else 1.0)
+                * (0.7 if rn == 5 else 1.0)
+                * (0.8 if rn == 6 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.128 * 0.093 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                if tc < 0.8
+                else 0.128
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00518
+        * (0.1 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
+def normal3_profile_cfg():
+    return {
+        "id": "normal3",
+        "c1": 0.03593,
+        "g": 1.19027,
+        "bonus_tile_coeff": 1.19478,
+        "stage_thresholds": [0.16440, 0.76306, 2.450775],
+        "alpha_stages": [0.57668, 0.13227, 0.89247, 0.10247],
+        "factors_below": {"existing": 0.28030, "new": 4.76367},
+        "factors_above": {"existing": 0.44883, "new": 2.90653},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (2.3 if rn == 3 else 1.0)
+                * (1.2 if rn == 4 else 1.0)
+                * (0.9 if rn == 5 else 1.0)
+                * (0.6 if rn == 6 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.105 * 0.093 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                if tc < 0.8
+                else 0.105
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00664
+        * (0.1 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
+PROFILES = {
+    "math4": MathProfile(easy_profile_cfg("math4")),
+    "normal1": MathProfile(normal1_profile_cfg()),
+    "normal2": MathProfile(normal2_profile_cfg()),
+    "normal3": MathProfile(normal3_profile_cfg()),
 }
 
 
@@ -406,7 +463,7 @@ def main():
     for _ in range(count):
         if balance < bet:
             balance = 1000.0
-        profile_id = random.choice(["math2", "math3", "math4"])
+        profile_id = random.choice(["math4", "normal1", "normal2", "normal3"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 
