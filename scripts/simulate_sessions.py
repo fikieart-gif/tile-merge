@@ -38,6 +38,7 @@ class MathProfile:
         self.bomb_prob = cfg["bomb_prob"]
         self.bonus_prob = cfg["bonus_prob"]
         self.bonus_tile_coeff = cfg.get("bonus_tile_coeff", BONUS_TILE_COEFF)
+        self.initial_session_coeff = cfg.get("initial_session_coeff", 0.0)
 
     def get_current_stage(self, total_coeff):
         for i, th in enumerate(self.stage_thresholds):
@@ -174,10 +175,68 @@ def normal2_profile_cfg():
     }
 
 
+def normal5_profile_cfg():
+    return {
+        "id": "normal5",
+        "c1": 0.05533,
+        "g": 1.22126,
+        "bonus_tile_coeff": 1.06932,
+        "stage_thresholds": [0.44486, 0.57207, 1.550775],
+        "alpha_stages": [0.29635, 0.13184, 0.63581, 0.53540],
+        "factors_below": {"existing": 0.27456, "new": 4.16494},
+        "factors_above": {"existing": 0.28956, "new": 4.04816},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (2.5 if rn == 2 else 1.0)
+                * (1.336 if rn == 3 else 1.0)
+                * (1.0 if rn == 4 else 1.0)
+                * (0.92 if rn == 5 else 1.0)
+                * (0.92 if rn == 6 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.095 * 0.35 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                if tc < 0.8
+                else 0.095
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00612
+        * (0.1 if rn <= 1 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
+def hard_test_profile_cfg():
+    return {
+        "id": "hard_test",
+        "c1": 0.01098,
+        "g": 1.76093,
+        "bonus_tile_coeff": 5.0,
+        "initial_session_coeff": 1.0,
+        "stage_thresholds": [1.23249, 2.22738, 3.36854],
+        "alpha_stages": [0.54723, 0.64005, 0.31724, 0.31724],
+        "factors_below": {"existing": 1.0, "new": 1.0},
+        "factors_above": {"existing": 0.31535, "new": 2.18834},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (0.9 if rn == 1 else 1.0)
+                * (1.2 if rn == 3 else 1.0)
+                * (1.07 if rn == 4 else 1.0)
+                * (1.03 if rn == 5 else 1.0)
+                * (1.2 if rn == 7 else 1.0)
+            ))(0.08277 * (2.5 if seen else 1.0))
+        ),
+        "bonus_prob": lambda rn, seen: 0.00836
+        * (0.05 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
 PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
     "normal2": MathProfile(normal2_profile_cfg()),
     "normal4": MathProfile(normal4_profile_cfg()),
+    "normal5": MathProfile(normal5_profile_cfg()),
+    "hard_test": MathProfile(hard_test_profile_cfg()),
 }
 
 
@@ -365,7 +424,7 @@ def simulate_session(balance, bet, profile_id, store):
 
     state = {
         "grid": [0] * 9,
-        "total_coeff": 0.0,
+        "total_coeff": profile.initial_session_coeff,
         "round_index": 0,
         "session_bet": bet,
         "bonus_seen": False,
@@ -436,7 +495,7 @@ def main():
     for _ in range(count):
         if balance < bet:
             balance = 1000.0
-        profile_id = random.choice(["math4", "normal2", "normal4"])
+        profile_id = random.choice(["math4", "normal2", "normal4", "normal5", "hard_test"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 

@@ -1390,11 +1390,11 @@
         gap: 6px;
       }
       .math-profile-btn {
-        padding: 3px 8px;
+        padding: 3px 6px;
         min-height: 22px;
         border-radius: 6px;
-        font-size: 11px;
-        line-height: 14px;
+        font-size: 10px;
+        line-height: 13px;
       }
       .game {
         --app-footer-clearance: 68px;
@@ -1748,12 +1748,14 @@
       <button type="button" class="math-profile-btn" id="mathProfileEasy" data-profile="math4" aria-pressed="false">Easy</button>
       <button type="button" class="math-profile-btn" id="mathProfileNormal2" data-profile="normal2" aria-pressed="false">Normal2</button>
       <button type="button" class="math-profile-btn" id="mathProfileNormal4" data-profile="normal4" aria-pressed="false">Normal4</button>
+      <button type="button" class="math-profile-btn" id="mathProfileNormal5" data-profile="normal5" aria-pressed="false">Normal5</button>
+      <button type="button" class="math-profile-btn" id="mathProfileHardTest" data-profile="hard_test" aria-pressed="false">Hard(test)</button>
     </div>
   </div>
 </div>
 </div>
 
-<script src="assets/game-math.js?v=79"></script>
+<script src="assets/game-math.js?v=82"></script>
 <script src="assets/session-history.js?v=74"></script>
 <script src="assets/js/merge-flight.js?v=74"></script>
 <script>
@@ -1841,7 +1843,7 @@
     }
   }
 
-  const MATH_PROFILE_IDS = ["math4", "normal2", "normal4"];
+  const MATH_PROFILE_IDS = ["math4", "normal2", "normal4", "normal5", "hard_test"];
 
   function normalizeMathProfileId(profileId) {
     if (profileId === "math2" || profileId === "math3") return "math4";
@@ -2003,7 +2005,7 @@
     random: {
       title: "50 рандомных сессий",
       text:
-        "Быстро прогоняет 50 игр по выбранной математике (Easy/Normal2/Normal4).\n\n" +
+        "Быстро прогоняет 50 игр по выбранной математике (Easy/Normal2/4/5).\n\n" +
         "В каждой сессии ставка случайная — от MIN до текущего баланса. " +
         "Исход решается наугад: кэшаут, бомба или «нет пар».\n\n" +
         "Все результаты сохраняются в статистику.",
@@ -2011,7 +2013,7 @@
     pasha: {
       title: "Стратегия Паши",
       text:
-        "50 сессий по выбранной математике (Easy/Normal2/Normal4) и фиксированным правилам:\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal2/4/5) и фиксированным правилам:\n\n" +
         "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
         "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
         "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.",
@@ -2019,7 +2021,7 @@
     aleksey: {
       title: "Стратегия Алексея",
       text:
-        "50 сессий по выбранной математике (Easy/Normal2/Normal4) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal2/4/5) и ставке с листа.\n\n" +
         "Играем, пока не наберём x1.5 или выше.\n" +
         "Как только x ≥ 1.5 — смотрим пустые клетки в конце раунда:\n" +
         "• больше 2 пустых — кэшаут;\n" +
@@ -2028,7 +2030,7 @@
     x1: {
       title: "Вывод при >= x1",
       text:
-        "50 сессий по выбранной математике (Easy/Normal2/Normal4) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal2/4/5) и ставке с листа.\n\n" +
         "Играем до x1 и выше, затем сразу кэшаут. " +
         "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.",
     },
@@ -2120,7 +2122,7 @@
     const stepCoeffs = [];
     const state = {
       grid: new Array(9).fill(0),
-      totalCoeff: 0,
+      totalCoeff: getInitialSessionCoeff ? getInitialSessionCoeff() : 0,
       roundIndex: 0,
       sessionBet: bet,
       bonusTileAppeared: false,
@@ -2417,6 +2419,8 @@
     clearSessionLog();
   }
 
+  let getInitialSessionCoeff;
+
   function bindMathApi(m) {
     MAX_LEVEL = m.MAX_LEVEL;
     MIN_BET = m.MIN_BET;
@@ -2432,6 +2436,9 @@
     findPairs = m.findPairs;
     coeffGainLabelForMerge = m.coeffGainLabelForMerge;
     mergeLevelsFromPairs = m.mergeLevelsFromPairs;
+    getInitialSessionCoeff = function () {
+      return typeof m.initialSessionCoeff === "number" ? m.initialSessionCoeff : 0;
+    };
   }
 
   function updateMathProfileButtons(activeId) {
@@ -4149,6 +4156,7 @@
       balance -= bet;
       sessionBet = bet;
       beginSessionLog(bet, balance);
+      totalCoeff = getInitialSessionCoeff();
     } else {
       bet = sessionBet;
     }
@@ -4471,6 +4479,12 @@
   });
   document.getElementById("mathProfileNormal4").addEventListener("click", function () {
     switchMathProfile("normal4");
+  });
+  document.getElementById("mathProfileNormal5").addEventListener("click", function () {
+    switchMathProfile("normal5");
+  });
+  document.getElementById("mathProfileHardTest").addEventListener("click", function () {
+    switchMathProfile("hard_test");
   });
   if (settingsButton) {
     settingsButton.addEventListener("click", function () {
