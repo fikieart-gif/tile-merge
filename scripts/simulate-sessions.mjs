@@ -42,7 +42,7 @@ const TILE_CRASH = math.TILE_CRASH;
 const TILE_BONUS = math.TILE_BONUS;
 const SESSION_COUNT = Number(process.argv[2]) || 50;
 const BET = Number(process.argv[3]) || 10;
-const PROFILES = ["math4", "normal1", "normal2", "normal3"];
+const PROFILES = ["math4", "normal2", "normal4"];
 
 function processMergeChainSync(levels, coeffBase) {
   let grid = levels.slice();
