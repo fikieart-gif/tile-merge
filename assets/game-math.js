@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Normal2 / Normal4 / Normal5 / Hard(test) — setActiveProfile().
+ * Профили Easy / Normal4 / Normal5 / Normal6 / Hard(test) — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -189,28 +189,31 @@
     return prob;
   }
 
-  function computeNormal2BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
-    const BOMB_P = 0.128;
+  function computeNormal6BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.13205;
     let prob;
     if (totalCoeff < 0.8) {
-      prob = BOMB_P * 0.093;
+      prob = BOMB_P * 0.22;
       if (roundNumber === 1) prob *= 0.1;
       if (bonusAlreadyAppeared) prob *= 7.0;
     } else {
       prob = BOMB_P;
     }
-    if (roundNumber === 3) prob *= 1.8;
-    if (roundNumber === 4) prob *= 0.8;
-    if (roundNumber === 5) prob *= 0.7;
-    if (roundNumber === 6) prob *= 0.8;
+    if (roundNumber === 2) prob *= 1.55;
+    if (roundNumber === 3) prob *= 1.1;
+    if (roundNumber === 4) prob *= 0.75;
+    if (roundNumber === 5) prob *= 0.6;
+    if (roundNumber === 6) prob *= 0.6;
+    if (roundNumber === 7) prob *= 0.6;
+    if (roundNumber === 8) prob *= 0.6;
     if (bonusAlreadyAppeared) prob *= 1.5;
     return prob;
   }
 
-  function computeNormal2BonusProb(roundNumber, bonusAlreadyAppeared) {
-    const BONUS_P = 0.00518;
+  function computeNormal6BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00617;
     let prob = BONUS_P;
-    if (roundNumber <= 2) prob *= 0.1;
+    if (roundNumber <= 1) prob *= 0.1;
     if (bonusAlreadyAppeared) prob *= 0.1;
     return prob;
   }
@@ -303,16 +306,16 @@
     computeBonusProb: computeEasyBonusProb,
   };
 
-  const NORMAL2_PROFILE_SPEC = {
-    c1: 0.03593,
-    g: 1.25261,
-    bonusTileCoeff: 1.19478,
-    stageThresholds: [0.17750, 0.49775, 1.550775],
-    alphaStages: [0.70028, 0.20708, 0.73031, 0.10306],
-    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
-    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
-    computeBombProb: computeNormal2BombProb,
-    computeBonusProb: computeNormal2BonusProb,
+  const NORMAL6_PROFILE_SPEC = {
+    c1: 0.0397,
+    g: 1.22002,
+    bonusTileCoeff: 0.96935,
+    stageThresholds: [0.36410, 0.57145, 1.550775],
+    alphaStages: [0.21254, 0.15938, 0.63540, 0.33540],
+    factorsBelowOne: { existing: 0.25776, new: 1.504776 },
+    factorsAboveOne: { existing: 0.30668, new: 4.09397 },
+    computeBombProb: computeNormal6BombProb,
+    computeBonusProb: computeNormal6BonusProb,
   };
 
   const NORMAL4_PROFILE_SPEC = {
@@ -355,8 +358,8 @@
   const EASY = createMathProfile(
     Object.assign({ id: "math4", label: "Easy" }, EASY_PROFILE_SPEC)
   );
-  const NORMAL2 = createMathProfile(
-    Object.assign({ id: "normal2", label: "Normal2" }, NORMAL2_PROFILE_SPEC)
+  const NORMAL6 = createMathProfile(
+    Object.assign({ id: "normal6", label: "Normal6" }, NORMAL6_PROFILE_SPEC)
   );
   const NORMAL4 = createMathProfile(
     Object.assign({ id: "normal4", label: "Normal4" }, NORMAL4_PROFILE_SPEC)
@@ -468,7 +471,7 @@
 
   const profiles = {
     math4: EASY,
-    normal2: NORMAL2,
+    normal6: NORMAL6,
     normal4: NORMAL4,
     normal5: NORMAL5,
     hard_test: HARD_TEST,

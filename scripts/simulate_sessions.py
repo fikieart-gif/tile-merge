@@ -146,31 +146,34 @@ def normal4_profile_cfg():
     }
 
 
-def normal2_profile_cfg():
+def normal6_profile_cfg():
     return {
-        "id": "normal2",
-        "c1": 0.03593,
-        "g": 1.25261,
-        "bonus_tile_coeff": 1.19478,
-        "stage_thresholds": [0.17750, 0.49775, 1.550775],
-        "alpha_stages": [0.70028, 0.20708, 0.73031, 0.10306],
-        "factors_below": {"existing": 0.25013, "new": 4.32571},
-        "factors_above": {"existing": 0.30802, "new": 2.86874},
+        "id": "normal6",
+        "c1": 0.0397,
+        "g": 1.22002,
+        "bonus_tile_coeff": 0.96935,
+        "stage_thresholds": [0.36410, 0.57145, 1.550775],
+        "alpha_stages": [0.21254, 0.15938, 0.63540, 0.33540],
+        "factors_below": {"existing": 0.25776, "new": 1.504776},
+        "factors_above": {"existing": 0.30668, "new": 4.09397},
         "bomb_prob": lambda tc, rn, seen=False: (
             (lambda p: (
-                p * (1.8 if rn == 3 else 1.0)
-                * (0.8 if rn == 4 else 1.0)
-                * (0.7 if rn == 5 else 1.0)
-                * (0.8 if rn == 6 else 1.0)
+                p * (1.55 if rn == 2 else 1.0)
+                * (1.1 if rn == 3 else 1.0)
+                * (0.75 if rn == 4 else 1.0)
+                * (0.6 if rn == 5 else 1.0)
+                * (0.6 if rn == 6 else 1.0)
+                * (0.6 if rn == 7 else 1.0)
+                * (0.6 if rn == 8 else 1.0)
                 * (1.5 if seen else 1.0)
             ))(
-                0.128 * 0.093 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                0.13205 * 0.22 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
                 if tc < 0.8
-                else 0.128
+                else 0.13205
             )
         ),
-        "bonus_prob": lambda rn, seen: 0.00518
-        * (0.1 if rn <= 2 else 1.0)
+        "bonus_prob": lambda rn, seen: 0.00617
+        * (0.1 if rn <= 1 else 1.0)
         * (0.1 if seen else 1.0),
     }
 
@@ -233,7 +236,7 @@ def hard_test_profile_cfg():
 
 PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
-    "normal2": MathProfile(normal2_profile_cfg()),
+    "normal6": MathProfile(normal6_profile_cfg()),
     "normal4": MathProfile(normal4_profile_cfg()),
     "normal5": MathProfile(normal5_profile_cfg()),
     "hard_test": MathProfile(hard_test_profile_cfg()),
@@ -495,7 +498,7 @@ def main():
     for _ in range(count):
         if balance < bet:
             balance = 1000.0
-        profile_id = random.choice(["math4", "normal2", "normal4", "normal5", "hard_test"])
+        profile_id = random.choice(["math4", "normal4", "normal5", "normal6", "hard_test"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 
