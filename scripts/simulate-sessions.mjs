@@ -41,8 +41,8 @@ const history = sandbox.MergeSessionHistory;
 const TILE_CRASH = math.TILE_CRASH;
 const TILE_BONUS = math.TILE_BONUS;
 const SESSION_COUNT = Number(process.argv[2]) || 50;
-const BET = Number(process.argv[3]) || 10;
-const PROFILES = ["math4", "normal4", "normal5", "normal6", "hard_test"];
+const BET = Number(process.argv[3]) || 50;
+const PROFILES = ["math4", "normal4", "normal6", "hard"];
 
 function processMergeChainSync(levels, coeffBase) {
   let grid = levels.slice();
@@ -221,9 +221,7 @@ function run() {
   const results = [];
 
   for (let i = 0; i < SESSION_COUNT; i++) {
-    if (balance < BET) {
-      balance = 1000;
-    }
+    if (balance < BET) break;
     const profileId = PROFILES[Math.floor(Math.random() * PROFILES.length)];
     const session = simulateSession(balance, BET, profileId);
     balance = session.balance;

@@ -930,16 +930,6 @@
       color: #fbbf24;
       background: rgba(251, 191, 36, 0.06);
     }
-    .bet-sheet-simulate--aleksey {
-      border-color: #3a345a;
-      background: rgba(167, 139, 250, 0.08);
-      color: #a78bfa;
-    }
-    .bet-sheet-simulate-row--aleksey .bet-sheet-simulate-info {
-      border-color: #3a345a;
-      color: #a78bfa;
-      background: rgba(167, 139, 250, 0.06);
-    }
     .bet-sheet-simulate--x1 {
       border-color: #1e3a4a;
       background: rgba(78, 199, 251, 0.08);
@@ -1636,13 +1626,13 @@
       <h2 class="bet-sheet-title" id="betSheetTitle">Сумма ставки</h2>
       <div class="bet-sheet-simulate-row">
         <button type="button" class="bet-sheet-simulate" id="betSheetSimulate50">
-          <span class="bet-sheet-simulate-label">50 рандомных сессий</span>
+          <span class="bet-sheet-simulate-label">50 сессий</span>
         </button>
         <button
           type="button"
           class="bet-sheet-simulate-info"
           id="betSheetSimulate50Info"
-          aria-label="Описание: 50 рандомных сессий"
+          aria-label="Описание: 50 сессий"
         >
           i
         </button>
@@ -1656,19 +1646,6 @@
           class="bet-sheet-simulate-info"
           id="betSheetSimulatePashaInfo"
           aria-label="Описание: Стратегия Паши"
-        >
-          i
-        </button>
-      </div>
-      <div class="bet-sheet-simulate-row bet-sheet-simulate-row--aleksey">
-        <button type="button" class="bet-sheet-simulate bet-sheet-simulate--aleksey" id="betSheetSimulateAleksey">
-          <span class="bet-sheet-simulate-label">Стратегия Алексея</span>
-        </button>
-        <button
-          type="button"
-          class="bet-sheet-simulate-info"
-          id="betSheetSimulateAlekseyInfo"
-          aria-label="Описание: Стратегия Алексея"
         >
           i
         </button>
@@ -1747,15 +1724,14 @@
     <div class="math-profile-switch" role="group" aria-label="Вариант математики">
       <button type="button" class="math-profile-btn" id="mathProfileEasy" data-profile="math4" aria-pressed="false">Easy</button>
       <button type="button" class="math-profile-btn" id="mathProfileNormal4" data-profile="normal4" aria-pressed="false">Normal4</button>
-      <button type="button" class="math-profile-btn" id="mathProfileNormal5" data-profile="normal5" aria-pressed="false">Normal5</button>
       <button type="button" class="math-profile-btn" id="mathProfileNormal6" data-profile="normal6" aria-pressed="false">Normal6</button>
-      <button type="button" class="math-profile-btn" id="mathProfileHardTest" data-profile="hard_test" aria-pressed="false">Hard(test)</button>
+      <button type="button" class="math-profile-btn" id="mathProfileHard" data-profile="hard" aria-pressed="false">Hard</button>
     </div>
   </div>
 </div>
 </div>
 
-<script src="assets/game-math.js?v=83"></script>
+<script src="assets/game-math.js?v=85"></script>
 <script src="assets/session-history.js?v=74"></script>
 <script src="assets/js/merge-flight.js?v=74"></script>
 <script>
@@ -1843,11 +1819,12 @@
     }
   }
 
-  const MATH_PROFILE_IDS = ["math4", "normal4", "normal5", "normal6", "hard_test"];
+  const MATH_PROFILE_IDS = ["math4", "normal4", "normal6", "hard"];
 
   function normalizeMathProfileId(profileId) {
     if (profileId === "math2" || profileId === "math3") return "math4";
-    if (profileId === "normal1" || profileId === "normal2" || profileId === "normal3") return "normal6";
+    if (profileId === "normal1" || profileId === "normal2" || profileId === "normal3" || profileId === "normal5") return "normal6";
+    if (profileId === "hard_test") return "hard";
     return MATH_PROFILE_IDS.indexOf(profileId) >= 0 ? profileId : null;
   }
 
@@ -1978,61 +1955,43 @@
     return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
   }
 
-  function countEmptyGridCells(grid) {
-    let count = 0;
-    for (let i = 0; i < grid.length; i++) {
-      if (grid[i] === 0) count += 1;
-    }
-    return count;
-  }
-
-  function shouldAlekseyCashout(totalCoeff, grid) {
-    return totalCoeff >= 1.5 && countEmptyGridCells(grid) > 2;
-  }
-
   const PASHA_DEFAULT_BET = 50;
   const PASHA_RECOVERY_BET = 250;
   const PASHA_WIN_RESET = 250;
   const PASHA_CASHOUT_COEFF = 2;
   const CASHOUT_X1_COEFF = 1;
+  const BULK_RANDOM_SESSION_BET = 50;
   const BULK_SIM_BTN_LABELS = {
-    betSheetSimulate50: "50 рандомных сессий",
+    betSheetSimulate50: "50 сессий",
     betSheetSimulatePasha: "Стратегия Паши",
-    betSheetSimulateAleksey: "Стратегия Алексея",
     betSheetSimulateX1: "Вывод при >= x1",
   };
   const BULK_SIM_INFO = {
     random: {
-      title: "50 рандомных сессий",
+      title: "50 сессий",
       text:
-        "Быстро прогоняет 50 игр по выбранной математике (Easy/Normal4/5/6).\n\n" +
-        "В каждой сессии ставка случайная — от MIN до текущего баланса. " +
-        "Исход решается наугад: кэшаут, бомба или «нет пар».\n\n" +
+        "Быстро прогоняет 50 игр по выбранной математике (Easy/Normal4/6/Hard).\n\n" +
+        "Ставка фиксированная — $50. Исход каждой сессии случайный: кэшаут, бомба или «нет пар». " +
+        "Момент кэшаута тоже выбирается наугад.\n\n" +
+        "Если баланс не хватает на ставку, оставшиеся сессии не играются. Пополнения баланса нет.\n\n" +
         "Все результаты сохраняются в статистику.",
     },
     pasha: {
       title: "Стратегия Паши",
       text:
-        "50 сессий по выбранной математике (Easy/Normal4/5/6) и фиксированным правилам:\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal4/6/Hard) и фиксированным правилам:\n\n" +
         "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
         "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
-        "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.",
-    },
-    aleksey: {
-      title: "Стратегия Алексея",
-      text:
-        "50 сессий по выбранной математике (Easy/Normal4/5/6) и ставке с листа.\n\n" +
-        "Играем, пока не наберём x1.5 или выше.\n" +
-        "Как только x ≥ 1.5 — смотрим пустые клетки в конце раунда:\n" +
-        "• больше 2 пустых — кэшаут;\n" +
-        "• 1–2 пустых — играем дальше.",
+        "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.\n" +
+        "• Если баланс обнулился — остаётся $0, пополнения нет.",
     },
     x1: {
       title: "Вывод при >= x1",
       text:
-        "50 сессий по выбранной математике (Easy/Normal4/5/6) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Normal4/6/Hard) и ставке с листа.\n\n" +
         "Играем до x1 и выше, затем сразу кэшаут. " +
-        "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.",
+        "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.\n\n" +
+        "Если баланс обнулился — остаётся $0, пополнения нет.",
     },
   };
 
@@ -2184,23 +2143,6 @@
         }
       }
 
-      if (playMode === "aleksey") {
-        if (shouldAlekseyCashout(state.totalCoeff, state.grid)) {
-          outcome = "cashout";
-          finalCoeff = state.totalCoeff;
-          win = state.sessionBet * state.totalCoeff;
-          sessionBalance += win;
-          break;
-        }
-        if (state.roundIndex >= maxRounds && state.totalCoeff > 0) {
-          outcome = "cashout";
-          finalCoeff = state.totalCoeff;
-          win = state.sessionBet * state.totalCoeff;
-          sessionBalance += win;
-          break;
-        }
-      }
-
       if (
         playMode === "until_coeff_2" &&
         state.roundIndex >= maxRounds &&
@@ -2249,10 +2191,8 @@
     clearSessionLog();
 
     for (let i = 0; i < count; i++) {
-      if (simBalance < MIN_BET) {
-        simBalance = 1000;
-      }
-      const bet = pickRandomBetForBalance(simBalance);
+      if (simBalance < BULK_RANDOM_SESSION_BET) break;
+      const bet = BULK_RANDOM_SESSION_BET;
       const result = simulateOneSessionFast(simBalance, bet, {
         playMode: "random",
       });
@@ -2284,9 +2224,7 @@
     clearSessionLog();
 
     for (let i = 0; i < count; i++) {
-      if (simBalance < MIN_BET) {
-        simBalance = 1000;
-      }
+      if (simBalance < MIN_BET) break;
       const bet = Math.min(
         strategyBet,
         Math.max(MIN_BET, Math.floor(simBalance))
@@ -2318,42 +2256,6 @@
     return simBalance;
   }
 
-  function runBulkAlekseySessions(count) {
-    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
-    if (!window.MergeSessionHistory) return null;
-
-    let simBalance = balance;
-    const bet = readBetFromSheetInput();
-    let lastBet = bet;
-
-    setBulkSimButtonsDisabled(true);
-    window.MergeSessionHistory.clearActiveSession();
-    clearSessionLog();
-
-    for (let i = 0; i < count; i++) {
-      if (simBalance < MIN_BET) {
-        simBalance = 1000;
-      }
-      const sessionBet = Math.min(
-        bet,
-        Math.max(MIN_BET, Math.floor(simBalance))
-      );
-      const result = simulateOneSessionFast(simBalance, sessionBet, {
-        playMode: "aleksey",
-      });
-      simBalance = result.balanceEnd;
-      setBulkSimProgress("betSheetSimulateAleksey", i + 1, count);
-    }
-
-    balance = simBalance;
-    baseBetAmount = lastBet;
-    resetSession();
-    persistWalletState();
-    setBulkSimButtonsDisabled(false);
-    updateUI();
-    return simBalance;
-  }
-
   function runBulkCashoutX1Sessions(count) {
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
     if (!window.MergeSessionHistory) return null;
@@ -2367,9 +2269,7 @@
     clearSessionLog();
 
     for (let i = 0; i < count; i++) {
-      if (simBalance < MIN_BET) {
-        simBalance = 1000;
-      }
+      if (simBalance < MIN_BET) break;
       const sessionBet = Math.min(
         bet,
         Math.max(MIN_BET, Math.floor(simBalance))
@@ -4477,14 +4377,11 @@
   document.getElementById("mathProfileNormal4").addEventListener("click", function () {
     switchMathProfile("normal4");
   });
-  document.getElementById("mathProfileNormal5").addEventListener("click", function () {
-    switchMathProfile("normal5");
-  });
   document.getElementById("mathProfileNormal6").addEventListener("click", function () {
     switchMathProfile("normal6");
   });
-  document.getElementById("mathProfileHardTest").addEventListener("click", function () {
-    switchMathProfile("hard_test");
+  document.getElementById("mathProfileHard").addEventListener("click", function () {
+    switchMathProfile("hard");
   });
   if (settingsButton) {
     settingsButton.addEventListener("click", function () {
@@ -4529,10 +4426,6 @@
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkPashaSessions(50);
   });
-  document.getElementById("betSheetSimulateAleksey").addEventListener("click", function () {
-    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
-    runBulkAlekseySessions(50);
-  });
   document.getElementById("betSheetSimulateX1").addEventListener("click", function () {
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkCashoutX1Sessions(50);
@@ -4544,10 +4437,6 @@
   document.getElementById("betSheetSimulatePashaInfo").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "pasha");
-  });
-  document.getElementById("betSheetSimulateAlekseyInfo").addEventListener("click", function (e) {
-    e.stopPropagation();
-    toggleBetSheetSimTooltip(this, "aleksey");
   });
   document.getElementById("betSheetSimulateX1Info").addEventListener("click", function (e) {
     e.stopPropagation();
