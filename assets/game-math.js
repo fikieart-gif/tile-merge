@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Normal4 / Normal6 / Hard — setActiveProfile().
+ * Профили Easy / Normal4 / Normal6 / Normal7 / Hard — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -218,6 +218,36 @@
     return prob;
   }
 
+  function computeNormal7BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.07364;
+    let prob;
+    if (totalCoeff < 0.8) {
+      prob = BOMB_P * 0.22;
+      if (roundNumber === 1) prob *= 0.37;
+      if (bonusAlreadyAppeared) prob *= 7.0;
+    } else {
+      prob = BOMB_P;
+    }
+    if (roundNumber === 2) prob *= 3.3;
+    if (roundNumber === 3) prob *= 1.875;
+    if (roundNumber === 4) prob *= 1.3;
+    if (roundNumber === 5) prob *= 1.0;
+    if (roundNumber === 6) prob *= 1.0;
+    if (roundNumber === 7) prob *= 0.8;
+    if (roundNumber === 8) prob *= 0.8;
+    if (roundNumber >= 9) prob *= 0.8;
+    if (bonusAlreadyAppeared) prob *= 1.5;
+    return prob;
+  }
+
+  function computeNormal7BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00617;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.1;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
+
   function computeNormal4BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
     const BOMB_P = 0.1405;
     let prob;
@@ -292,6 +322,18 @@
     computeBonusProb: computeNormal6BonusProb,
   };
 
+  const NORMAL7_PROFILE_SPEC = {
+    c1: 0.0397,
+    g: 1.22002,
+    bonusTileCoeff: 0.96935,
+    stageThresholds: [0.36410, 0.57145, 1.550775],
+    alphaStages: [0.21254, 0.15938, 0.63540, 0.013540],
+    factorsBelowOne: { existing: 0.25776, new: 1.504776 },
+    factorsAboveOne: { existing: 0.90668, new: 1.509397 },
+    computeBombProb: computeNormal7BombProb,
+    computeBonusProb: computeNormal7BonusProb,
+  };
+
   const NORMAL4_PROFILE_SPEC = {
     c1: 0.04997,
     g: 1.18002,
@@ -322,6 +364,9 @@
   );
   const NORMAL6 = createMathProfile(
     Object.assign({ id: "normal6", label: "Normal6" }, NORMAL6_PROFILE_SPEC)
+  );
+  const NORMAL7 = createMathProfile(
+    Object.assign({ id: "normal7", label: "Normal7" }, NORMAL7_PROFILE_SPEC)
   );
   const NORMAL4 = createMathProfile(
     Object.assign({ id: "normal4", label: "Normal4" }, NORMAL4_PROFILE_SPEC)
@@ -432,6 +477,7 @@
     math4: EASY,
     normal4: NORMAL4,
     normal6: NORMAL6,
+    normal7: NORMAL7,
     hard: HARD,
   };
 

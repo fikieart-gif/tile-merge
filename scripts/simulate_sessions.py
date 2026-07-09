@@ -178,6 +178,39 @@ def normal6_profile_cfg():
     }
 
 
+def normal7_profile_cfg():
+    return {
+        "id": "normal7",
+        "c1": 0.0397,
+        "g": 1.22002,
+        "bonus_tile_coeff": 0.96935,
+        "stage_thresholds": [0.36410, 0.57145, 1.550775],
+        "alpha_stages": [0.21254, 0.15938, 0.63540, 0.013540],
+        "factors_below": {"existing": 0.25776, "new": 1.504776},
+        "factors_above": {"existing": 0.90668, "new": 1.509397},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (3.3 if rn == 2 else 1.0)
+                * (1.875 if rn == 3 else 1.0)
+                * (1.3 if rn == 4 else 1.0)
+                * (1.0 if rn == 5 else 1.0)
+                * (1.0 if rn == 6 else 1.0)
+                * (0.8 if rn == 7 else 1.0)
+                * (0.8 if rn == 8 else 1.0)
+                * (0.8 if rn >= 9 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(
+                0.07364 * 0.22 * (0.37 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                if tc < 0.8
+                else 0.07364
+            )
+        ),
+        "bonus_prob": lambda rn, seen: 0.00617
+        * (0.1 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
 def hard_profile_cfg():
     return {
         "id": "hard",
@@ -209,6 +242,7 @@ PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
     "normal4": MathProfile(normal4_profile_cfg()),
     "normal6": MathProfile(normal6_profile_cfg()),
+    "normal7": MathProfile(normal7_profile_cfg()),
     "hard": MathProfile(hard_profile_cfg()),
 }
 
@@ -468,7 +502,7 @@ def main():
     for _ in range(count):
         if balance < bet:
             break
-        profile_id = random.choice(["math4", "normal4", "normal6", "hard"])
+        profile_id = random.choice(["math4", "normal4", "normal6", "normal7", "hard"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 
