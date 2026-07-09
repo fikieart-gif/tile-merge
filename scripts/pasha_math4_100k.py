@@ -15,7 +15,6 @@ PASHA_RECOVERY_BET = 250
 PASHA_WIN_RESET = 250
 PASHA_CASHOUT_COEFF = 2
 MAX_ROUNDS = 120
-REFILL_BALANCE = 1000.0
 START_BALANCE = 1000.0
 
 
@@ -316,15 +315,14 @@ def run_pasha(count, seed=42):
     total_won = 0.0
     sum_coeff = 0.0
     sum_rounds = 0
-    refills = 0
+    sessions_played = 0
     bet_50 = 0
     bet_250 = 0
 
     t0 = time.time()
     for i in range(count):
         if sim_balance < MIN_BET:
-            sim_balance = REFILL_BALANCE
-            refills += 1
+            break
 
         bet = min(strategy_bet, max(MIN_BET, math.floor(sim_balance)))
         if bet == PASHA_DEFAULT_BET:
@@ -339,6 +337,7 @@ def run_pasha(count, seed=42):
             first_balance_before = result["balance_before"]
 
         sim_balance = result["balance_end"]
+        sessions_played += 1
         outcomes[result["outcome"]] = outcomes.get(result["outcome"], 0) + 1
         total_wagered += result["bet"]
         total_won += max(0.0, result["win"])
@@ -360,18 +359,18 @@ def run_pasha(count, seed=42):
     net_balance = sim_balance - first_balance_before
 
     return {
-        "count": count,
+        "count": sessions_played,
+        "requested": count,
         "elapsed_sec": elapsed,
         "start_balance": first_balance_before,
         "final_balance": sim_balance,
         "net_balance": net_balance,
-        "refills": refills,
         "outcomes": outcomes,
         "total_wagered": total_wagered,
         "total_won": total_won,
-        "avg_coeff": sum_coeff / count,
-        "avg_rounds": sum_rounds / count,
-        "avg_bet": total_wagered / count,
+        "avg_coeff": sum_coeff / sessions_played if sessions_played else 0,
+        "avg_rounds": sum_rounds / sessions_played if sessions_played else 0,
+        "avg_bet": total_wagered / sessions_played if sessions_played else 0,
         "rtp": total_won / total_wagered if total_wagered else 0,
         "bet_50_sessions": bet_50,
         "bet_250_sessions": bet_250,
@@ -382,22 +381,23 @@ def main():
     count = 100_000
     print(f"Стратегия Паши · Math4 · {count:,} сессий · старт ${START_BALANCE:.0f}")
     print("Правила: $50 до упора → после бомбы $250 до x2 → win≥$250 сброс на $50")
+    print("При нулевом балансе прогон останавливается (без пополнения).")
     print()
 
     stats = run_pasha(count)
 
     o = stats["outcomes"]
+    played = stats["count"]
     print("=== Результат ===")
-    print(f"Сессий:           {stats['count']:,}")
+    print(f"Сессий (сыграно): {played:,} / {stats['requested']:,}")
     print(f"Время:            {stats['elapsed_sec']:.1f} с")
     print(f"Старт:            ${stats['start_balance']:.2f}")
     print(f"Финал:            ${stats['final_balance']:.2f}")
     print(f"Итог (баланс):    ${stats['net_balance']:+.2f}")
-    print(f"Пополнений $1000: {stats['refills']:,}")
     print()
-    print(f"Кэшаут:           {o.get('cashout', 0):,} ({100 * o.get('cashout', 0) / count:.1f}%)")
-    print(f"Бомба:            {o.get('crash', 0):,} ({100 * o.get('crash', 0) / count:.1f}%)")
-    print(f"Нет пар:          {o.get('no_pairs', 0):,} ({100 * o.get('no_pairs', 0) / count:.1f}%)")
+    print(f"Кэшаут:           {o.get('cashout', 0):,} ({100 * o.get('cashout', 0) / played:.1f}%)" if played else "Кэшаут:           0")
+    print(f"Бомба:            {o.get('crash', 0):,} ({100 * o.get('crash', 0) / played:.1f}%)" if played else "Бомба:            0")
+    print(f"Нет пар:          {o.get('no_pairs', 0):,} ({100 * o.get('no_pairs', 0) / played:.1f}%)" if played else "Нет пар:          0")
     print()
     print(f"Средний x:        x{stats['avg_coeff']:.2f}")
     print(f"Средний шаг:      {stats['avg_rounds']:.1f}")

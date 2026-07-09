@@ -19,8 +19,8 @@
       rel="stylesheet"
     />
   </noscript>
-  <!-- Версия query — в синх с TILE_ASSET_VERSION в скрипте (сейчас 74) -->
-  <link rel="preload" href="assets/merge-animations.css?v=74" as="style" fetchpriority="high" />
+  <!-- Версия query — в синх с TILE_ASSET_VERSION в скрипте (сейчас 75) -->
+  <link rel="preload" href="assets/merge-animations.css?v=75" as="style" fetchpriority="high" />
   <link rel="preload" href="assets/js/merge-flight.js?v=74" as="script" fetchpriority="high" />
   <link rel="preload" href="assets/tiles/tile-1-plate.png?v=74" as="image" media="(min-width: 481px)" fetchpriority="high" />
   <link rel="preload" href="assets/tiles/tile-1-emblem.png?v=74" as="image" media="(min-width: 481px)" fetchpriority="high" />
@@ -30,7 +30,7 @@
   <link rel="preload" href="assets/tiles/mobile/tile-1-emblem.png?v=74" as="image" media="(max-width: 480px)" fetchpriority="high" />
   <link rel="preload" href="assets/tiles/mobile/tile-2-plate.png?v=74" as="image" media="(max-width: 480px)" />
   <link rel="preload" href="assets/tiles/mobile/tile-2-emblem.png?v=74" as="image" media="(max-width: 480px)" />
-  <link rel="stylesheet" href="assets/merge-animations.css?v=74" />
+  <link rel="stylesheet" href="assets/merge-animations.css?v=75" />
   <style>
     * {
       box-sizing: border-box;
@@ -2389,7 +2389,7 @@
    * link merge-animations.css?v=…, script merge-flight.js?v=…,
    * game-math.js?v=… и session-history.js?v=…
    */
-  const TILE_ASSET_VERSION = "74";
+  const TILE_ASSET_VERSION = "75";
   /**
    * Узкий экран: те же имена файлов в assets/tiles/mobile/ (см. @media max-width ниже в <style>).
    */
@@ -2407,12 +2407,13 @@
   const CASHOUT_CELEBRATION_DISPLAY_MS = 465;
 
   /* --- Тайминги анимаций ---
-   * ANIMATION_SETTLE_BUFFER_MS должен совпадать с duration анимаций tile-merge-resolve в merge-animations.css.
-   * При изменении CSS — обновлять MERGE_RESOLVE_MS и обратно. */
+   * MERGE_RESOLVE_MS — tile-merge-resolve в merge-animations.css.
+   * MERGE_PENDING_HIGHLIGHT_MS — mergePendingGlowRamp (0.09s).
+   * DESPAWN_DUR_MS — tileDespawnPop (0.04s). */
   const ANIMATION_SETTLE_BUFFER_MS = 7;    // буфер после окончания animation (rAF settle)
   const MERGE_SPAWN_POP_MS = 40;            // длительность tileSpawnPop
   const MERGE_SPAWN_SETTLE_BUFFER_MS = 7;   // запас после spawn до merge-pending
-  const MERGE_PENDING_HIGHLIGHT_MS = 50;    // glow до полёта
+  const MERGE_PENDING_HIGHLIGHT_MS = 90;    // glow до полёта (= CSS 0.09s)
   const MERGE_RESOLVE_MS = 55;              // длительность tile-merge-resolve animation (= CSS)
   const MERGE_CHAIN_GAP_AFTER_PATCH_MS = 30; // gap до следующего processMergeChain
 
@@ -2761,9 +2762,7 @@
     if (!pairs || pairs.length === 0) {
       const nextCoeff = coeffBase + calcRoundCoeff(levels);
       currentGrid = levels;
-      /* Ждём завершения tile-merge-resolve анимации последнего merge перед тем как пересобрать DOM.
-         Без этого updateUI() вызывает innerHTML="" через ~180ms (MERGE_CHAIN_GAP_AFTER_PATCH_MS),
-         а анимация длится 340ms + 3×rAF ≈ 390ms — последний кадр обрезается. */
+      /* Ждём завершения tile-merge-resolve перед пересборкой DOM (runAfterMergeResolveSettled). */
       runAfterMergeResolveSettled(function () {
         // Во время полёта +кэф основной коэффициент не пересчитываем.
         updateUI();
@@ -3268,7 +3267,7 @@
       return;
     }
 
-    const DESPAWN_DUR_MS = 35;
+    const DESPAWN_DUR_MS = 40;
     faceEntries.forEach((entry) => {
       entry.face.classList.remove("cell-face--despawn-out");
       void entry.face.offsetWidth;
@@ -4281,12 +4280,6 @@
 
   function getMaxBetForSheet() {
     return Math.max(MIN_BET, Math.floor(balance));
-  }
-
-  function pickRandomBetForBalance(walletBalance) {
-    const cap = Math.max(MIN_BET, Math.floor(walletBalance));
-    if (cap <= MIN_BET) return MIN_BET;
-    return MIN_BET + Math.floor(Math.random() * (cap - MIN_BET + 1));
   }
 
   function clampBetAmount(n) {

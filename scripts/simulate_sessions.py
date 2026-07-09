@@ -464,6 +464,9 @@ def simulate_session(balance, bet, profile_id, store):
 def main():
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 50
     bet = int(sys.argv[2]) if len(sys.argv) > 2 else 50
+    profile_id = sys.argv[3] if len(sys.argv) > 3 else "math4"
+    if profile_id not in PROFILES:
+        profile_id = "math4"
     store = SessionStore()
     balance = 1000.0
     outcomes = {"cashout": 0, "crash": 0, "no_pairs": 0}
@@ -471,7 +474,6 @@ def main():
     for _ in range(count):
         if balance < bet:
             break
-        profile_id = random.choice(["math4", "normal7", "normal8", "hard"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 
@@ -481,6 +483,7 @@ def main():
         json.dump(store.to_local_storage(), f, ensure_ascii=False, indent=2)
 
     print(f"=== Симуляция: {count} сессий ===")
+    print(f"Профиль: {profile_id}")
     print(f"Ставка: ${bet}")
     print(f"Итоговый баланс: ${balance:.2f}")
     print(

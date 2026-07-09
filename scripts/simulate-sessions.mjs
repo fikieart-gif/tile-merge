@@ -1,6 +1,7 @@
 /**
  * Симуляция N сессий с рандомным кэшаутом (без DOM).
- * node scripts/simulate-sessions.mjs [count] [bet]
+ * node scripts/simulate-sessions.mjs [count] [bet] [profile]
+ * profile: math4 | normal7 | normal8 | hard (один профиль на весь прогон, как в UI)
  */
 import fs from "fs";
 import path from "path";
@@ -42,7 +43,9 @@ const TILE_CRASH = math.TILE_CRASH;
 const TILE_BONUS = math.TILE_BONUS;
 const SESSION_COUNT = Number(process.argv[2]) || 50;
 const BET = Number(process.argv[3]) || 50;
-const PROFILES = ["math4", "normal7", "normal8", "hard"];
+const VALID_PROFILES = ["math4", "normal7", "normal8", "hard"];
+const PROFILE_ARG = process.argv[4] || "math4";
+const PROFILE_ID = VALID_PROFILES.includes(PROFILE_ARG) ? PROFILE_ARG : "math4";
 
 function processMergeChainSync(levels, coeffBase) {
   let grid = levels.slice();
@@ -222,8 +225,7 @@ function run() {
 
   for (let i = 0; i < SESSION_COUNT; i++) {
     if (balance < BET) break;
-    const profileId = PROFILES[Math.floor(Math.random() * PROFILES.length)];
-    const session = simulateSession(balance, BET, profileId);
+    const session = simulateSession(balance, BET, PROFILE_ID);
     balance = session.balance;
     results.push(session);
   }
@@ -238,6 +240,7 @@ function run() {
   });
 
   console.log("=== Симуляция: " + SESSION_COUNT + " сессий ===");
+  console.log("Профиль: " + PROFILE_ID);
   console.log("Ставка: $" + BET);
   console.log("Итоговый баланс: $" + balance.toFixed(2));
   console.log("Кэшаут:", byOutcome.cashout, "| Бомба:", byOutcome.crash, "| Нет пар:", byOutcome.no_pairs);

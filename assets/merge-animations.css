@@ -103,7 +103,7 @@
   opacity: 1;
   z-index: 2;
 }
-/* Плавное «загорание» до полёта (длительность ≈ MERGE_PENDING_HIGHLIGHT_MS в index.html). */
+/* Плавное «загорание» до полёта (длительность = MERGE_PENDING_HIGHLIGHT_MS в index.html, 0.09s). */
 @keyframes mergePendingGlowRamp {
   0% {
     opacity: 0;

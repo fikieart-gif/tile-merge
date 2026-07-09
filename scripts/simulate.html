@@ -25,9 +25,12 @@
       const history = window.MergeSessionHistory;
       const TILE_CRASH = math.TILE_CRASH;
       const TILE_BONUS = math.TILE_BONUS;
-      const SESSION_COUNT = Number(new URLSearchParams(location.search).get("n")) || 50;
-      const BET = Number(new URLSearchParams(location.search).get("bet")) || 50;
-      const PROFILES = ["math4", "normal7", "normal8", "hard"];
+      const params = new URLSearchParams(location.search);
+      const SESSION_COUNT = Number(params.get("n")) || 50;
+      const BET = Number(params.get("bet")) || 50;
+      const VALID_PROFILES = ["math4", "normal7", "normal8", "hard"];
+      const profileArg = params.get("profile") || "math4";
+      const PROFILE_ID = VALID_PROFILES.includes(profileArg) ? profileArg : "math4";
       const logEl = document.getElementById("log");
 
       function processMergeChainSync(levels, coeffBase) {
@@ -169,8 +172,7 @@
 
       for (let i = 0; i < SESSION_COUNT; i++) {
         if (balance < BET) break;
-        const profileId = PROFILES[Math.floor(Math.random() * PROFILES.length)];
-        const session = simulateSession(balance, BET, profileId);
+        const session = simulateSession(balance, BET, PROFILE_ID);
         balance = session.balance;
         results.push(session);
         byOutcome[session.outcome] = (byOutcome[session.outcome] || 0) + 1;
@@ -178,7 +180,8 @@
 
       const agg = history.loadAggregates();
       const lines = [
-        "Готово: " + SESSION_COUNT + " сессий записаны в localStorage.",
+        "Готово: " + results.length + " сессий записаны в localStorage.",
+        "Профиль: " + PROFILE_ID,
         "",
         "Итоговый баланс: $" + balance.toFixed(2),
         "Кэшаут: " + byOutcome.cashout + " | Бомба: " + byOutcome.crash + " | Нет пар: " + byOutcome.no_pairs,

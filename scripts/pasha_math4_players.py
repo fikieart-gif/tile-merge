@@ -11,7 +11,6 @@ from pasha_math4_100k import (
     PASHA_DEFAULT_BET,
     PASHA_RECOVERY_BET,
     PASHA_WIN_RESET,
-    REFILL_BALANCE,
     START_BALANCE,
     simulate_one_session,
 )
@@ -20,11 +19,10 @@ PLAYERS = 100_000
 SESSIONS_PER_PLAYER = 50
 
 
-def run_pasha_for_player(rng, sessions=SESSIONS_PER_PLAYER, allow_refill=True):
+def run_pasha_for_player(rng, sessions=SESSIONS_PER_PLAYER):
     sim_balance = START_BALANCE
     strategy_bet = PASHA_DEFAULT_BET
     play_mode = "until_end"
-    refills = 0
     outcomes = {"cashout": 0, "crash": 0, "no_pairs": 0}
     total_wagered = 0.0
     total_won = 0.0
@@ -32,11 +30,7 @@ def run_pasha_for_player(rng, sessions=SESSIONS_PER_PLAYER, allow_refill=True):
 
     for _ in range(sessions):
         if sim_balance < MIN_BET:
-            if allow_refill:
-                sim_balance = REFILL_BALANCE
-                refills += 1
-            else:
-                break
+            break
 
         bet = min(strategy_bet, max(MIN_BET, math.floor(sim_balance)))
         result = simulate_one_session(
@@ -58,7 +52,6 @@ def run_pasha_for_player(rng, sessions=SESSIONS_PER_PLAYER, allow_refill=True):
     return {
         "final_balance": sim_balance,
         "net": sim_balance - START_BALANCE,
-        "refills": refills,
         "games_played": games_played,
         "busted": games_played < sessions and sim_balance < MIN_BET,
         "outcomes": outcomes,
@@ -79,21 +72,16 @@ def percentile(sorted_vals, p):
 
 
 def main():
-    import sys
-
-    allow_refill = "--no-refill" not in sys.argv
     total_sessions = PLAYERS * SESSIONS_PER_PLAYER
-    mode_label = "с пополнениями" if allow_refill else "без пополнений (банкрот = выбыл)"
     print(
         f"Стратегия Паши · Math4 · {PLAYERS:,} игроков × до {SESSIONS_PER_PLAYER} игр "
-        f"({mode_label})"
+        f"(без пополнения — банкрот = выбыл)"
     )
     print(f"Старт каждого игрока: ${START_BALANCE:.0f}")
     print()
 
     finals = []
     nets = []
-    refills_total = 0
     games_played_total = 0
     busted_players = 0
     outcomes = {"cashout": 0, "crash": 0, "no_pairs": 0}
@@ -107,11 +95,10 @@ def main():
     t0 = time.time()
     for player in range(PLAYERS):
         rng = random.Random(player + 1_000_003)
-        stats = run_pasha_for_player(rng, allow_refill=allow_refill)
+        stats = run_pasha_for_player(rng)
 
         finals.append(stats["final_balance"])
         nets.append(stats["net"])
-        refills_total += stats["refills"]
         games_played_total += stats["games_played"]
         if stats["busted"]:
             busted_players += 1
@@ -161,8 +148,6 @@ def main():
     print(f"Игра заработала (GGR): ${house_profit:+,.2f}")
     print(f"Игроки потеряли (GGR): ${-house_profit:+,.2f}")
     print(f"RTP:                   {100 * total_won / total_wagered:.2f}%")
-    if allow_refill:
-        print(f"Пополнений:            {refills_total:,}")
     print()
     print("=== Баланс после игр ===")
     print(f"Средний:               ${statistics.mean(finals):,.2f}")
