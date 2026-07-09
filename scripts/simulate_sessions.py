@@ -114,66 +114,34 @@ def easy_profile_cfg(profile_id):
     }
 
 
-def normal4_profile_cfg():
+def normal8_profile_cfg():
     return {
-        "id": "normal4",
-        "c1": 0.04997,
-        "g": 1.18002,
-        "bonus_tile_coeff": 0.96935,
-        "stage_thresholds": [0.36410, 0.57145, 1.550775],
-        "alpha_stages": [0.31254, 0.15938, 0.63540, 0.33540],
-        "factors_below": {"existing": 0.25776, "new": 4.04776},
-        "factors_above": {"existing": 0.30668, "new": 4.09397},
+        "id": "normal8",
+        "c1": 0.00403,
+        "g": 1.5168294,
+        "bonus_tile_coeff": 0.98,
+        "initial_session_coeff": 0.5,
+        "stage_thresholds": [1.0079756, 2.396, 3.550775],
+        "alpha_stages": [0.14014, 0.52303, 0.24575, 0.104575],
+        "factors_below": {"existing": 0.74, "new": 2.15},
+        "factors_above": {"existing": 0.66, "new": 2.206},
         "bomb_prob": lambda tc, rn, seen=False: (
             (lambda p: (
-                p * (1.4 if rn == 2 else 1.0)
-                * (1.1 if rn == 3 else 1.0)
-                * (0.75 if rn == 4 else 1.0)
-                * (0.8 if rn == 5 else 1.0)
-                * (0.75 if rn == 6 else 1.0)
-                * (0.6 if rn == 7 else 1.0)
-                * (0.6 if rn == 8 else 1.0)
+                p * (1.1 if rn == 4 else 1.0)
+                * (0.9 if rn == 5 else 1.0)
+                * (0.8 if rn == 6 else 1.0)
+                * (0.8 if rn == 7 else 1.0)
+                * (0.8 if rn == 8 else 1.0)
+                * (0.8 if rn >= 9 else 1.0)
                 * (1.5 if seen else 1.0)
             ))(
-                0.1405 * 0.22 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
+                0.0666 * 0.35 * (0.35 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
                 if tc < 0.8
-                else 0.1405
+                else 0.0666
             )
         ),
-        "bonus_prob": lambda rn, seen: 0.00617
-        * (0.1 if rn <= 1 else 1.0)
-        * (0.1 if seen else 1.0),
-    }
-
-
-def normal6_profile_cfg():
-    return {
-        "id": "normal6",
-        "c1": 0.0397,
-        "g": 1.22002,
-        "bonus_tile_coeff": 0.96935,
-        "stage_thresholds": [0.36410, 0.57145, 1.550775],
-        "alpha_stages": [0.21254, 0.15938, 0.63540, 0.33540],
-        "factors_below": {"existing": 0.25776, "new": 1.504776},
-        "factors_above": {"existing": 0.30668, "new": 4.09397},
-        "bomb_prob": lambda tc, rn, seen=False: (
-            (lambda p: (
-                p * (2.1 if rn == 2 else 1.0)
-                * (1.05 if rn == 3 else 1.0)
-                * (0.55 if rn == 4 else 1.0)
-                * (0.6 if rn == 5 else 1.0)
-                * (0.6 if rn == 6 else 1.0)
-                * (0.6 if rn == 7 else 1.0)
-                * (0.6 if rn == 8 else 1.0)
-                * (1.5 if seen else 1.0)
-            ))(
-                0.13205 * 0.22 * (0.1 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
-                if tc < 0.8
-                else 0.13205
-            )
-        ),
-        "bonus_prob": lambda rn, seen: 0.00617
-        * (0.1 if rn <= 1 else 1.0)
+        "bonus_prob": lambda rn, seen: 0.005
+        * (0.1 if rn <= 2 else 1.0)
         * (0.1 if seen else 1.0),
     }
 
@@ -218,17 +186,19 @@ def hard_profile_cfg():
         "g": 1.76093,
         "bonus_tile_coeff": 7.0,
         "initial_session_coeff": 1.0,
-        "stage_thresholds": [1.23249, 2.22738, 3.36854],
-        "alpha_stages": [0.54723, 0.64005, 0.31724, 0.251724],
+        "stage_thresholds": [1.23249, 2.22738, 3.36854, 13.36854],
+        "alpha_stages": [0.54723, 0.64005, 0.31724, 0.251724, 0.0251724],
         "factors_below": {"existing": 1.0, "new": 1.0},
         "factors_above": {"existing": 0.31535, "new": 2.18834},
         "bomb_prob": lambda tc, rn, seen=False: (
             (lambda p: (
-                p * (0.9 if rn == 1 else 1.0)
-                * (1.2 if rn == 3 else 1.0)
-                * (1.15 if rn == 4 else 1.0)
-                * (1.15 if rn == 5 else 1.0)
-                * (1.1 if rn == 6 else 1.0)
+                p * (0.92 if rn == 1 else 1.0)
+                * (1.1 if rn == 2 else 1.0)
+                * (1.19 if rn == 3 else 1.0)
+                * (1.06 if rn == 4 else 1.0)
+                * (1.05 if rn == 5 else 1.0)
+                * (0.9 if rn == 7 else 1.0)
+                * (0.9 if rn == 8 else 1.0)
                 * (1.5 if seen else 1.0)
             ))(0.08677)
         ),
@@ -240,9 +210,8 @@ def hard_profile_cfg():
 
 PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
-    "normal4": MathProfile(normal4_profile_cfg()),
-    "normal6": MathProfile(normal6_profile_cfg()),
     "normal7": MathProfile(normal7_profile_cfg()),
+    "normal8": MathProfile(normal8_profile_cfg()),
     "hard": MathProfile(hard_profile_cfg()),
 }
 
@@ -502,7 +471,7 @@ def main():
     for _ in range(count):
         if balance < bet:
             break
-        profile_id = random.choice(["math4", "normal4", "normal6", "normal7", "hard"])
+        profile_id = random.choice(["math4", "normal7", "normal8", "hard"])
         outcome, win, coeff, balance = simulate_session(balance, bet, profile_id, store)
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
 

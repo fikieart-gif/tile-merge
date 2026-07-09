@@ -739,14 +739,15 @@
 
     function formatProfileLabel(profile) {
       if (profile === "math4") return "Easy";
+      if (profile === "normal8") return "Normal8";
       if (profile === "normal7") return "Normal7";
-      if (profile === "normal6") return "Normal6";
-      if (profile === "normal4") return "Normal4";
-      if (profile === "normal5") return "Normal6";
+      if (profile === "normal4") return "Normal8";
+      if (profile === "normal6") return "Normal8";
+      if (profile === "normal5") return "Normal8";
       if (profile === "hard") return "Hard";
       if (profile === "hard_test") return "Hard";
       if (profile === "math2" || profile === "math3") return "Easy";
-      if (profile === "normal1" || profile === "normal2" || profile === "normal3") return "Normal6";
+      if (profile === "normal1" || profile === "normal2" || profile === "normal3") return "Normal8";
       return "Easy";
     }
 
