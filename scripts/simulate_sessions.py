@@ -39,6 +39,7 @@ class MathProfile:
         self.bonus_prob = cfg["bonus_prob"]
         self.bonus_tile_coeff = cfg.get("bonus_tile_coeff", BONUS_TILE_COEFF)
         self.initial_session_coeff = cfg.get("initial_session_coeff", 0.0)
+        self.single_bomb_roll_per_round = cfg.get("single_bomb_roll_per_round", False)
 
     def get_current_stage(self, total_coeff):
         for i, th in enumerate(self.stage_thresholds):
@@ -46,15 +47,7 @@ class MathProfile:
                 return i + 1
         return len(self.stage_thresholds) + 1
 
-    def pick_tile(self, stage, levels, bonus_seen, total_coeff, round_num):
-        bonus_p = self.bonus_prob(round_num, bonus_seen)
-        bomb_p = self.bomb_prob(total_coeff, round_num, bonus_seen)
-        r = random.random()
-        if r < bonus_p:
-            return TILE_BONUS
-        if r < bonus_p + bomb_p:
-            return TILE_CRASH
-
+    def pick_level(self, stage, levels, total_coeff):
         alpha = self.alpha_stages[stage - 1]
         base_probs = get_base_probs(alpha)
         factors = self.factors_below if total_coeff < 1.0 else self.factors_above
@@ -72,6 +65,37 @@ class MathProfile:
             if r_lvl <= acc:
                 return lvl
         return 1
+
+    def pick_bonus_or_level(self, stage, levels, bonus_seen, total_coeff, round_num):
+        bonus_p = self.bonus_prob(round_num, bonus_seen)
+        if random.random() < bonus_p:
+            return TILE_BONUS
+        return self.pick_level(stage, levels, total_coeff)
+
+    def create_round_spawn_context(self, total_coeff, round_num, bonus_seen):
+        if not self.single_bomb_roll_per_round:
+            return None
+        bomb_p = self.bomb_prob(total_coeff, round_num, bonus_seen)
+        return {
+            "round_has_bomb": random.random() < bomb_p,
+            "bomb_consumed": False,
+        }
+
+    def pick_tile(self, stage, levels, bonus_seen, total_coeff, round_num, round_spawn_ctx=None):
+        if self.single_bomb_roll_per_round and round_spawn_ctx is not None:
+            if not round_spawn_ctx["bomb_consumed"] and round_spawn_ctx["round_has_bomb"]:
+                round_spawn_ctx["bomb_consumed"] = True
+                return TILE_CRASH
+            return self.pick_bonus_or_level(stage, levels, bonus_seen, total_coeff, round_num)
+
+        bonus_p = self.bonus_prob(round_num, bonus_seen)
+        bomb_p = self.bomb_prob(total_coeff, round_num, bonus_seen)
+        r = random.random()
+        if r < bonus_p:
+            return TILE_BONUS
+        if r < bonus_p + bomb_p:
+            return TILE_CRASH
+        return self.pick_level(stage, levels, total_coeff)
 
     def calc_round_coeff(self, levels):
         total = 0.0
@@ -146,34 +170,34 @@ def normal8_profile_cfg():
     }
 
 
-def normal7_profile_cfg():
+def norm_b_1_profile_cfg():
     return {
-        "id": "normal7",
-        "c1": 0.0397,
-        "g": 1.22002,
-        "bonus_tile_coeff": 0.96935,
-        "stage_thresholds": [0.36410, 0.57145, 1.550775],
-        "alpha_stages": [0.21254, 0.15938, 0.63540, 0.013540],
-        "factors_below": {"existing": 0.25776, "new": 1.504776},
-        "factors_above": {"existing": 0.90668, "new": 1.509397},
+        "id": "norm_b_1",
+        "c1": 0.00403,
+        "g": 1.5168294,
+        "bonus_tile_coeff": 1.0,
+        "initial_session_coeff": 0.5,
+        "single_bomb_roll_per_round": True,
+        "stage_thresholds": [0.93732, 2.25863, 5.550775],
+        "alpha_stages": [0.14014, 0.52303, 0.24575, 0.104575],
+        "factors_below": {"existing": 0.74, "new": 2.15},
+        "factors_above": {"existing": 0.66, "new": 2.206},
         "bomb_prob": lambda tc, rn, seen=False: (
             (lambda p: (
-                p * (3.3 if rn == 2 else 1.0)
-                * (1.875 if rn == 3 else 1.0)
+                p * (0.6 if rn == 2 else 1.0)
+                * (1.2 if rn == 3 else 1.0)
                 * (1.3 if rn == 4 else 1.0)
-                * (1.0 if rn == 5 else 1.0)
+                * (1.05 if rn == 5 else 1.0)
                 * (1.0 if rn == 6 else 1.0)
-                * (0.8 if rn == 7 else 1.0)
-                * (0.8 if rn == 8 else 1.0)
-                * (0.8 if rn >= 9 else 1.0)
+                * (0.75 if rn >= 9 else 1.0)
                 * (1.5 if seen else 1.0)
             ))(
-                0.07364 * 0.22 * (0.37 if rn == 1 else 1.0) * (7.0 if seen else 1.0)
-                if tc < 0.8
-                else 0.07364
+                0.167 * 1.0 * (0.55 if rn == 1 else 1.0) * (2.0 if seen else 1.0)
+                if tc < 0.85
+                else 0.167
             )
         ),
-        "bonus_prob": lambda rn, seen: 0.00617
+        "bonus_prob": lambda rn, seen: 0.005
         * (0.1 if rn <= 2 else 1.0)
         * (0.1 if seen else 1.0),
     }
@@ -210,7 +234,7 @@ def hard_profile_cfg():
 
 PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
-    "normal7": MathProfile(normal7_profile_cfg()),
+    "norm_b_1": MathProfile(norm_b_1_profile_cfg()),
     "normal8": MathProfile(normal8_profile_cfg()),
     "hard": MathProfile(hard_profile_cfg()),
 }
@@ -295,13 +319,21 @@ def play_step(state, profile):
     spawn_mask = [False] * 9
     bonus_seen = state["bonus_seen"]
     crash_spawned = False
+    round_spawn_ctx = profile.create_round_spawn_context(
+        state["total_coeff"], state["round_index"], bonus_seen
+    )
 
     for i in range(9):
         if crash_spawned:
             continue
         if levels[i] == 0:
             tile = profile.pick_tile(
-                stage, levels, bonus_seen, state["total_coeff"], state["round_index"]
+                stage,
+                levels,
+                bonus_seen,
+                state["total_coeff"],
+                state["round_index"],
+                round_spawn_ctx,
             )
             if tile == TILE_BONUS:
                 bonus_seen = True
@@ -465,6 +497,8 @@ def main():
     count = int(sys.argv[1]) if len(sys.argv) > 1 else 50
     bet = int(sys.argv[2]) if len(sys.argv) > 2 else 50
     profile_id = sys.argv[3] if len(sys.argv) > 3 else "math4"
+    if profile_id == "normal7":
+        profile_id = "norm_b_1"
     if profile_id not in PROFILES:
         profile_id = "math4"
     store = SessionStore()

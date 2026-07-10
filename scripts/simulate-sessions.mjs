@@ -1,7 +1,7 @@
 /**
  * Симуляция N сессий с рандомным кэшаутом (без DOM).
  * node scripts/simulate-sessions.mjs [count] [bet] [profile]
- * profile: math4 | normal7 | normal8 | hard (один профиль на весь прогон, как в UI)
+ * profile: math4 | norm_b_1 | normal8 | hard (один профиль на весь прогон, как в UI)
  */
 import fs from "fs";
 import path from "path";
@@ -43,9 +43,14 @@ const TILE_CRASH = math.TILE_CRASH;
 const TILE_BONUS = math.TILE_BONUS;
 const SESSION_COUNT = Number(process.argv[2]) || 50;
 const BET = Number(process.argv[3]) || 50;
-const VALID_PROFILES = ["math4", "normal7", "normal8", "hard"];
+const VALID_PROFILES = ["math4", "norm_b_1", "normal8", "hard"];
 const PROFILE_ARG = process.argv[4] || "math4";
-const PROFILE_ID = VALID_PROFILES.includes(PROFILE_ARG) ? PROFILE_ARG : "math4";
+const PROFILE_ID =
+  PROFILE_ARG === "normal7"
+    ? "norm_b_1"
+    : VALID_PROFILES.includes(PROFILE_ARG)
+      ? PROFILE_ARG
+      : "math4";
 
 function processMergeChainSync(levels, coeffBase) {
   let grid = levels.slice();
@@ -68,6 +73,10 @@ function playStep(state) {
   let bonusTileAppeared = state.bonusTileAppeared;
   let crashSpawned = false;
 
+  const roundSpawnCtx = math.createRoundSpawnContext
+    ? math.createRoundSpawnContext(state.totalCoeff, state.roundIndex, bonusTileAppeared)
+    : null;
+
   for (let i = 0; i < 9; i++) {
     if (crashSpawned) continue;
     if (levels[i] === 0) {
@@ -76,7 +85,8 @@ function playStep(state) {
         levels,
         bonusTileAppeared,
         state.totalCoeff,
-        state.roundIndex
+        state.roundIndex,
+        roundSpawnCtx
       );
       if (tile === TILE_BONUS) bonusTileAppeared = true;
       if (tile === TILE_CRASH) crashSpawned = true;

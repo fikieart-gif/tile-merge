@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Normal7 / Normal8 / Hard — setActiveProfile().
+ * Профили Easy / Norm_b_1 / Normal8 / Hard — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -79,19 +79,7 @@
       return config.factorsAboveOne;
     }
 
-    function pickTileForEmptyCell(stage, existingLevels, bonusAlreadyAppeared, totalCoeff, roundNumber) {
-      const round = typeof roundNumber === "number" ? roundNumber : 99;
-      let bonusProb = config.computeBonusProb(round, bonusAlreadyAppeared);
-      let bombProb = config.computeBombProb(
-        totalCoeff,
-        round,
-        bonusAlreadyAppeared
-      );
-
-      const r = Math.random();
-      if (r < bonusProb) return TILE_BONUS;
-      if (r < bonusProb + bombProb) return TILE_CRASH;
-
+    function pickLevelForEmptyCell(stage, existingLevels, totalCoeff) {
       const alpha = alphaStages[stage - 1];
       const baseProbs = getBaseProbs(alpha);
       const factors = pickFactors(totalCoeff);
@@ -118,6 +106,65 @@
         if (rLvl <= acc) return lvl;
       }
       return 1;
+    }
+
+    function pickBonusOrLevelForEmptyCell(
+      stage,
+      existingLevels,
+      bonusAlreadyAppeared,
+      totalCoeff,
+      roundNumber
+    ) {
+      const round = typeof roundNumber === "number" ? roundNumber : 99;
+      const bonusProb = config.computeBonusProb(round, bonusAlreadyAppeared);
+      if (Math.random() < bonusProb) return TILE_BONUS;
+      return pickLevelForEmptyCell(stage, existingLevels, totalCoeff);
+    }
+
+    function pickTileForEmptyCell(
+      stage,
+      existingLevels,
+      bonusAlreadyAppeared,
+      totalCoeff,
+      roundNumber,
+      roundSpawnCtx
+    ) {
+      if (config.singleBombRollPerRound && roundSpawnCtx) {
+        if (!roundSpawnCtx.bombConsumed && roundSpawnCtx.roundHasBomb) {
+          roundSpawnCtx.bombConsumed = true;
+          return TILE_CRASH;
+        }
+        return pickBonusOrLevelForEmptyCell(
+          stage,
+          existingLevels,
+          bonusAlreadyAppeared,
+          totalCoeff,
+          roundNumber
+        );
+      }
+
+      const round = typeof roundNumber === "number" ? roundNumber : 99;
+      const bonusProb = config.computeBonusProb(round, bonusAlreadyAppeared);
+      const bombProb = config.computeBombProb(
+        totalCoeff,
+        round,
+        bonusAlreadyAppeared
+      );
+
+      const r = Math.random();
+      if (r < bonusProb) return TILE_BONUS;
+      if (r < bonusProb + bombProb) return TILE_CRASH;
+      return pickLevelForEmptyCell(stage, existingLevels, totalCoeff);
+    }
+
+    function createRoundSpawnContext(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+      if (!config.singleBombRollPerRound) return null;
+      const round = typeof roundNumber === "number" ? roundNumber : 99;
+      const bombProb = config.computeBombProb(totalCoeff, round, bonusAlreadyAppeared);
+      return {
+        roundHasBomb: Math.random() < bombProb,
+        bombConsumed: false,
+      };
     }
 
     function calcRoundCoeff(levels) {
@@ -157,6 +204,9 @@
       COEFF_BY_LEVEL: COEFF_BY_LEVEL,
       getCurrentStage: getCurrentStage,
       pickTileForEmptyCell: pickTileForEmptyCell,
+      pickBonusOrLevelForEmptyCell: pickBonusOrLevelForEmptyCell,
+      createRoundSpawnContext: createRoundSpawnContext,
+      singleBombRollPerRound: !!config.singleBombRollPerRound,
       calcRoundCoeff: calcRoundCoeff,
       coeffGainLabelForMerge: coeffGainLabelForMerge,
       initialSessionCoeff:
@@ -217,30 +267,28 @@
     return prob;
   }
 
-  function computeNormal7BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
-    const BOMB_P = 0.07364;
-    let prob;
-    if (totalCoeff < 0.8) {
-      prob = BOMB_P * 0.22;
-      if (roundNumber === 1) prob *= 0.37;
-      if (bonusAlreadyAppeared) prob *= 7.0;
+  function computeNormB1BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.167;
+    let bombProb;
+    if (totalCoeff < 0.85) {
+      bombProb = BOMB_P * 1.0;
+      if (roundNumber === 1) bombProb *= 0.55;
+      if (bonusAlreadyAppeared) bombProb *= 2.0;
     } else {
-      prob = BOMB_P;
+      bombProb = BOMB_P;
     }
-    if (roundNumber === 2) prob *= 3.3;
-    if (roundNumber === 3) prob *= 1.875;
-    if (roundNumber === 4) prob *= 1.3;
-    if (roundNumber === 5) prob *= 1.0;
-    if (roundNumber === 6) prob *= 1.0;
-    if (roundNumber === 7) prob *= 0.8;
-    if (roundNumber === 8) prob *= 0.8;
-    if (roundNumber >= 9) prob *= 0.8;
-    if (bonusAlreadyAppeared) prob *= 1.5;
-    return prob;
+    if (roundNumber === 2) bombProb *= 0.6;
+    if (roundNumber === 3) bombProb *= 1.2;
+    if (roundNumber === 4) bombProb *= 1.3;
+    if (roundNumber === 5) bombProb *= 1.05;
+    if (roundNumber === 6) bombProb *= 1.0;
+    if (roundNumber >= 9) bombProb *= 0.75;
+    if (bonusAlreadyAppeared) bombProb *= 1.5;
+    return bombProb;
   }
 
-  function computeNormal7BonusProb(roundNumber, bonusAlreadyAppeared) {
-    const BONUS_P = 0.00617;
+  function computeNormB1BonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.005;
     let prob = BONUS_P;
     if (roundNumber <= 2) prob *= 0.1;
     if (bonusAlreadyAppeared) prob *= 0.1;
@@ -295,16 +343,18 @@
     computeBonusProb: computeNormal8BonusProb,
   };
 
-  const NORMAL7_PROFILE_SPEC = {
-    c1: 0.0397,
-    g: 1.22002,
-    bonusTileCoeff: 0.96935,
-    stageThresholds: [0.36410, 0.57145, 1.550775],
-    alphaStages: [0.21254, 0.15938, 0.63540, 0.013540],
-    factorsBelowOne: { existing: 0.25776, new: 1.504776 },
-    factorsAboveOne: { existing: 0.90668, new: 1.509397 },
-    computeBombProb: computeNormal7BombProb,
-    computeBonusProb: computeNormal7BonusProb,
+  const NORM_B_1_PROFILE_SPEC = {
+    c1: 0.00403,
+    g: 1.5168294,
+    bonusTileCoeff: 1.0,
+    initialSessionCoeff: 0.5,
+    singleBombRollPerRound: true,
+    stageThresholds: [0.93732, 2.25863, 5.550775],
+    alphaStages: [0.14014, 0.52303, 0.24575, 0.104575],
+    factorsBelowOne: { existing: 0.74, new: 2.15 },
+    factorsAboveOne: { existing: 0.66, new: 2.206 },
+    computeBombProb: computeNormB1BombProb,
+    computeBonusProb: computeNormB1BonusProb,
   };
 
   const HARD_PROFILE_SPEC = {
@@ -326,8 +376,8 @@
   const NORMAL8 = createMathProfile(
     Object.assign({ id: "normal8", label: "Normal8" }, NORMAL8_PROFILE_SPEC)
   );
-  const NORMAL7 = createMathProfile(
-    Object.assign({ id: "normal7", label: "Normal7" }, NORMAL7_PROFILE_SPEC)
+  const NORM_B_1 = createMathProfile(
+    Object.assign({ id: "norm_b_1", label: "Norm_b_1" }, NORM_B_1_PROFILE_SPEC)
   );
   const HARD = createMathProfile(
     Object.assign({ id: "hard", label: "Hard" }, HARD_PROFILE_SPEC)
@@ -433,7 +483,7 @@
 
   const profiles = {
     math4: EASY,
-    normal7: NORMAL7,
+    norm_b_1: NORM_B_1,
     normal8: NORMAL8,
     hard: HARD,
   };

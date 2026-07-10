@@ -28,7 +28,7 @@
       const params = new URLSearchParams(location.search);
       const SESSION_COUNT = Number(params.get("n")) || 50;
       const BET = Number(params.get("bet")) || 50;
-      const VALID_PROFILES = ["math4", "normal7", "normal8", "hard"];
+      const VALID_PROFILES = ["math4", "norm_b_1", "normal8", "hard"];
       const profileArg = params.get("profile") || "math4";
       const PROFILE_ID = VALID_PROFILES.includes(profileArg) ? profileArg : "math4";
       const logEl = document.getElementById("log");
@@ -50,12 +50,20 @@
         const spawnMask = new Array(9).fill(false);
         let bonusTileAppeared = state.bonusTileAppeared;
         let crashSpawned = false;
+        const roundSpawnCtx = math.createRoundSpawnContext
+          ? math.createRoundSpawnContext(state.totalCoeff, state.roundIndex, bonusTileAppeared)
+          : null;
 
         for (let i = 0; i < 9; i++) {
           if (crashSpawned) continue;
           if (levels[i] === 0) {
             const tile = math.pickTileForEmptyCell(
-              stage, levels, bonusTileAppeared, state.totalCoeff, state.roundIndex
+              stage,
+              levels,
+              bonusTileAppeared,
+              state.totalCoeff,
+              state.roundIndex,
+              roundSpawnCtx
             );
             if (tile === TILE_BONUS) bonusTileAppeared = true;
             if (tile === TILE_CRASH) crashSpawned = true;
