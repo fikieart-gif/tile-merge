@@ -940,6 +940,16 @@
       color: #4ec7fb;
       background: rgba(78, 199, 251, 0.06);
     }
+    .bet-sheet-simulate--adaptive {
+      border-color: #3a345a;
+      background: rgba(167, 139, 250, 0.08);
+      color: #a78bfa;
+    }
+    .bet-sheet-simulate-row--adaptive .bet-sheet-simulate-info {
+      border-color: #3a345a;
+      color: #a78bfa;
+      background: rgba(167, 139, 250, 0.06);
+    }
     .bet-sheet-sim-tooltip {
       position: fixed;
       z-index: 2147483647;
@@ -1663,6 +1673,19 @@
           i
         </button>
       </div>
+      <div class="bet-sheet-simulate-row bet-sheet-simulate-row--adaptive">
+        <button type="button" class="bet-sheet-simulate bet-sheet-simulate--adaptive" id="betSheetSimulateAdaptive">
+          <span class="bet-sheet-simulate-label">Адаптивная стратегия</span>
+        </button>
+        <button
+          type="button"
+          class="bet-sheet-simulate-info"
+          id="betSheetSimulateAdaptiveInfo"
+          aria-label="Описание: Адаптивная стратегия"
+        >
+          i
+        </button>
+      </div>
       <div class="bet-sheet-stepper">
         <div class="bet-sheet-field" role="group" aria-labelledby="betSheetTitle">
           <button type="button" id="betSheetMinus" aria-label="Уменьшить ставку">
@@ -1967,16 +1990,32 @@
     return Math.random() < Math.min(0.85, 0.12 + roundIndex * 0.04);
   }
 
+  function countEmptyGridCells(grid) {
+    let count = 0;
+    for (let i = 0; i < grid.length; i++) {
+      if (grid[i] === 0) count += 1;
+    }
+    return count;
+  }
+
+  function shouldAdaptiveCashout(roundIndex, grid, minRounds, maxEmptyCells) {
+    if (roundIndex < minRounds) return false;
+    return countEmptyGridCells(grid) > maxEmptyCells;
+  }
+
   const PASHA_DEFAULT_BET = 50;
   const PASHA_RECOVERY_BET = 250;
   const PASHA_WIN_RESET = 250;
   const PASHA_CASHOUT_COEFF = 2;
   const CASHOUT_X1_COEFF = 1;
+  const ADAPTIVE_STRATEGY_R0 = 2;
+  const ADAPTIVE_STRATEGY_K = 2;
   const BULK_RANDOM_SESSION_BET = 50;
   const BULK_SIM_BTN_LABELS = {
     betSheetSimulate50: "50 сессий",
     betSheetSimulatePasha: "Стратегия Паши",
     betSheetSimulateX1: "Вывод при >= x1",
+    betSheetSimulateAdaptive: "Адаптивная стратегия",
   };
   const BULK_SIM_INFO = {
     random: {
@@ -2004,6 +2043,20 @@
         "Играем до x1 и выше, затем сразу кэшаут. " +
         "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.\n\n" +
         "Если баланс обнулился — остаётся $0, пополнения нет.",
+    },
+    adaptive: {
+      title: "Адаптивная стратегия",
+      text:
+        "50 сессий по выбранной математике (Easy/Norm_b_1/8/Hard), ставка $50.\n\n" +
+        "Стратегия (R0=" + ADAPTIVE_STRATEGY_R0 + ", K=" + ADAPTIVE_STRATEGY_K + "):\n" +
+        "• минимум R0 раундов — кэшаут раньше невозможен;\n" +
+        "• после R0-го раунда — играем, пока на доске ≤ K пустых клеток;\n" +
+        "• как только пустых клеток стало больше K — сразу кэшаут;\n" +
+        "• иначе сессия завершается бомбой или «нет пар».\n\n" +
+        "Идея: коэффициент начисляется за весь борд заново, а вероятность бомбы — один раз на раунд, " +
+        "независимо от числа пустых клеток. Почти заполненная ценными тайлами доска может давать RTP выше 100%, " +
+        "поэтому стратегия «удерживает» выгодную позицию и не выходит слишком рано.\n\n" +
+        "Если баланс не хватает на ставку — оставшиеся сессии не играются.",
     },
   };
 
@@ -2086,6 +2139,14 @@
       typeof opts.cashoutCoeffMin === "number" ? opts.cashoutCoeffMin : 2;
     const maxRounds =
       typeof opts.maxRounds === "number" ? opts.maxRounds : 120;
+    const adaptiveMinRounds =
+      typeof opts.adaptiveMinRounds === "number"
+        ? opts.adaptiveMinRounds
+        : ADAPTIVE_STRATEGY_R0;
+    const adaptiveMaxEmpty =
+      typeof opts.adaptiveMaxEmpty === "number"
+        ? opts.adaptiveMaxEmpty
+        : ADAPTIVE_STRATEGY_K;
     const profileId = window.MergeGameMath.getActiveProfileId();
 
     const balanceBefore = startBalance;
@@ -2153,6 +2214,23 @@
           sessionBalance += win;
           break;
         }
+      }
+
+      if (
+        playMode === "adaptive" &&
+        state.totalCoeff > 0 &&
+        shouldAdaptiveCashout(
+          state.roundIndex,
+          state.grid,
+          adaptiveMinRounds,
+          adaptiveMaxEmpty
+        )
+      ) {
+        outcome = "cashout";
+        finalCoeff = state.totalCoeff;
+        win = state.sessionBet * state.totalCoeff;
+        sessionBalance += win;
+        break;
       }
 
       if (
@@ -2292,6 +2370,39 @@
       });
       simBalance = result.balanceEnd;
       setBulkSimProgress("betSheetSimulateX1", i + 1, count);
+    }
+
+    balance = simBalance;
+    baseBetAmount = lastBet;
+    resetSession();
+    persistWalletState();
+    setBulkSimButtonsDisabled(false);
+    updateUI();
+    return simBalance;
+  }
+
+  function runBulkAdaptiveSessions(count) {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return null;
+    if (!window.MergeSessionHistory) return null;
+
+    let simBalance = balance;
+    let lastBet = BULK_RANDOM_SESSION_BET;
+
+    setBulkSimButtonsDisabled(true);
+    window.MergeSessionHistory.clearActiveSession();
+    clearSessionLog();
+
+    for (let i = 0; i < count; i++) {
+      if (simBalance < BULK_RANDOM_SESSION_BET) break;
+      const bet = BULK_RANDOM_SESSION_BET;
+      const result = simulateOneSessionFast(simBalance, bet, {
+        playMode: "adaptive",
+        adaptiveMinRounds: ADAPTIVE_STRATEGY_R0,
+        adaptiveMaxEmpty: ADAPTIVE_STRATEGY_K,
+      });
+      simBalance = result.balanceEnd;
+      lastBet = bet;
+      setBulkSimProgress("betSheetSimulateAdaptive", i + 1, count);
     }
 
     balance = simBalance;
@@ -4449,6 +4560,10 @@
     if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
     runBulkCashoutX1Sessions(50);
   });
+  document.getElementById("betSheetSimulateAdaptive").addEventListener("click", function () {
+    if (sessionBet > 0 || isAnimating || isStepLockedByBetStart) return;
+    runBulkAdaptiveSessions(50);
+  });
   document.getElementById("betSheetSimulate50Info").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "random");
@@ -4460,6 +4575,10 @@
   document.getElementById("betSheetSimulateX1Info").addEventListener("click", function (e) {
     e.stopPropagation();
     toggleBetSheetSimTooltip(this, "x1");
+  });
+  document.getElementById("betSheetSimulateAdaptiveInfo").addEventListener("click", function (e) {
+    e.stopPropagation();
+    toggleBetSheetSimTooltip(this, "adaptive");
   });
   document.addEventListener("click", function (e) {
     const tooltip = document.getElementById("betSheetSimTooltip");
