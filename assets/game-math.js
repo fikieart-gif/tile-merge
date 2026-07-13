@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Norm_b_1 / Normal8 / Hard — setActiveProfile().
+ * Профили Easy / Norm_b_1 / Normal8 / Hard / Hard_b_1 — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -309,7 +309,29 @@
     return bombProb;
   }
 
+  function computeHardB1BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.3693;
+    let bombProb = BOMB_P;
+    if (roundNumber === 1) bombProb *= 1.28;
+    if (roundNumber === 2) bombProb *= 1.15;
+    if (roundNumber === 3) bombProb *= 1.13;
+    if (roundNumber === 5) bombProb *= 0.9;
+    if (roundNumber === 6) bombProb *= 0.535;
+    if (roundNumber === 7) bombProb *= 0.5;
+    if (roundNumber >= 8) bombProb *= 0.55;
+    if (bonusAlreadyAppeared) bombProb *= 1.5;
+    return bombProb;
+  }
+
   function computeHardBonusProb(roundNumber, bonusAlreadyAppeared) {
+    const BONUS_P = 0.00836;
+    let prob = BONUS_P;
+    if (roundNumber <= 2) prob *= 0.05;
+    if (bonusAlreadyAppeared) prob *= 0.1;
+    return prob;
+  }
+
+  function computeHardB1BonusProb(roundNumber, bonusAlreadyAppeared) {
     const BONUS_P = 0.00836;
     let prob = BONUS_P;
     if (roundNumber <= 2) prob *= 0.05;
@@ -370,6 +392,20 @@
     computeBonusProb: computeHardBonusProb,
   };
 
+  const HARD_B_1_PROFILE_SPEC = {
+    c1: 0.01098,
+    g: 1.76093,
+    bonusTileCoeff: 7.0,
+    initialSessionCoeff: 1.0,
+    singleBombRollPerRound: true,
+    stageThresholds: [1.23249, 2.22738, 3.36854, 13.36854],
+    alphaStages: [0.54723, 0.64005, 0.31724, 0.251724, 0.1051724],
+    factorsBelowOne: { existing: 1, new: 1 },
+    factorsAboveOne: { existing: 0.31535, new: 2.18834 },
+    computeBombProb: computeHardB1BombProb,
+    computeBonusProb: computeHardB1BonusProb,
+  };
+
   const EASY = createMathProfile(
     Object.assign({ id: "math4", label: "Easy" }, EASY_PROFILE_SPEC)
   );
@@ -381,6 +417,9 @@
   );
   const HARD = createMathProfile(
     Object.assign({ id: "hard", label: "Hard" }, HARD_PROFILE_SPEC)
+  );
+  const HARD_B_1 = createMathProfile(
+    Object.assign({ id: "hard_b_1", label: "Hard_b_1" }, HARD_B_1_PROFILE_SPEC)
   );
 
   function applyGravityWithSpawnMask(levels, spawnMask) {
@@ -486,6 +525,7 @@
     norm_b_1: NORM_B_1,
     normal8: NORMAL8,
     hard: HARD,
+    hard_b_1: HARD_B_1,
   };
 
   let activeProfileId = "math4";
