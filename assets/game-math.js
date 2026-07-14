@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Norm_b_1 / Normal8 / Hard / Hard_b_1 — setActiveProfile().
+ * Профили Easy / Easy_b1 / Norm_b_1 / Normal8 / Hard / Hard_b_1 — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -239,6 +239,25 @@
     return prob;
   }
 
+  function computeEasyB1BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.3028;
+    let bombProb;
+    if (totalCoeff < 0.8) {
+      bombProb = BOMB_P * 0.093;
+      if (roundNumber === 1) bombProb *= 0.1;
+      if (bonusAlreadyAppeared) bombProb *= 7.0;
+    } else {
+      bombProb = BOMB_P;
+    }
+    if (roundNumber === 3) bombProb *= 1.3;
+    if (roundNumber === 4) bombProb *= 1.15;
+    if (roundNumber === 5) bombProb *= 0.9;
+    if (roundNumber === 6) bombProb *= 0.9;
+    if (roundNumber >= 7) bombProb *= 0.87;
+    if (bonusAlreadyAppeared) bombProb *= 1.5;
+    return bombProb;
+  }
+
   function computeNormal8BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
     const BOMB_P = 0.0666;
     let prob;
@@ -352,6 +371,19 @@
     computeBonusProb: computeEasyBonusProb,
   };
 
+  const EASY_B1_PROFILE_SPEC = {
+    c1: 0.02798,
+    g: 1.23261,
+    bonusTileCoeff: 0.91015,
+    singleBombRollPerRound: true,
+    stageThresholds: [0.17750, 0.49775, 1.550775],
+    alphaStages: [0.70028, 0.18708, 0.730306, 0.10306],
+    factorsBelowOne: { existing: 0.25013, new: 4.32571 },
+    factorsAboveOne: { existing: 0.30802, new: 2.86874 },
+    computeBombProb: computeEasyB1BombProb,
+    computeBonusProb: computeEasyBonusProb,
+  };
+
   const NORMAL8_PROFILE_SPEC = {
     c1: 0.00403,
     g: 1.5168294,
@@ -408,6 +440,9 @@
 
   const EASY = createMathProfile(
     Object.assign({ id: "math4", label: "Easy" }, EASY_PROFILE_SPEC)
+  );
+  const EASY_B1 = createMathProfile(
+    Object.assign({ id: "easy_b_1", label: "Easy_b1" }, EASY_B1_PROFILE_SPEC)
   );
   const NORMAL8 = createMathProfile(
     Object.assign({ id: "normal8", label: "Normal8" }, NORMAL8_PROFILE_SPEC)
@@ -522,6 +557,7 @@
 
   const profiles = {
     math4: EASY,
+    easy_b_1: EASY_B1,
     norm_b_1: NORM_B_1,
     normal8: NORMAL8,
     hard: HARD,
