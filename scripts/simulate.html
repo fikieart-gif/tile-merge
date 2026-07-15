@@ -28,7 +28,7 @@
       const params = new URLSearchParams(location.search);
       const SESSION_COUNT = Number(params.get("n")) || 50;
       const BET = Number(params.get("bet")) || 50;
-      const VALID_PROFILES = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1"];
+      const VALID_PROFILES = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1", "hard_b_2"];
       const profileArg = params.get("profile") || "math4";
       const PROFILE_ID = VALID_PROFILES.includes(profileArg) ? profileArg : "math4";
       const logEl = document.getElementById("log");

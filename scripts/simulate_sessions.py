@@ -293,6 +293,36 @@ def hard_b_1_profile_cfg():
     }
 
 
+def hard_b_2_profile_cfg():
+    return {
+        "id": "hard_b_2",
+        "c1": 0.015098,
+        "g": 1.6093,
+        "bonus_tile_coeff": 4.0,
+        "initial_session_coeff": 1.0,
+        "single_bomb_roll_per_round": True,
+        "stage_thresholds": [1.23249, 2.22738, 3.36854, 13.36854],
+        "alpha_stages": [0.54723, 0.64005, 0.31724, 0.251724, 0.1051724],
+        "factors_below": {"existing": 1.0, "new": 1.0},
+        "factors_above": {"existing": 0.31535, "new": 2.18834},
+        "bomb_prob": lambda tc, rn, seen=False: (
+            (lambda p: (
+                p * (1.28 if rn == 1 else 1.0)
+                * (1.15 if rn == 2 else 1.0)
+                * (1.13 if rn == 3 else 1.0)
+                * (0.9 if rn == 5 else 1.0)
+                * (0.535 if rn == 6 else 1.0)
+                * (0.5 if rn == 7 else 1.0)
+                * (0.55 if rn >= 8 else 1.0)
+                * (1.5 if seen else 1.0)
+            ))(0.324)
+        ),
+        "bonus_prob": lambda rn, seen: 0.00836
+        * (0.05 if rn <= 2 else 1.0)
+        * (0.1 if seen else 1.0),
+    }
+
+
 PROFILES = {
     "math4": MathProfile(easy_profile_cfg("math4")),
     "easy_b_1": MathProfile(easy_b_1_profile_cfg()),
@@ -300,6 +330,7 @@ PROFILES = {
     "normal8": MathProfile(normal8_profile_cfg()),
     "hard": MathProfile(hard_profile_cfg()),
     "hard_b_1": MathProfile(hard_b_1_profile_cfg()),
+    "hard_b_2": MathProfile(hard_b_2_profile_cfg()),
 }
 
 

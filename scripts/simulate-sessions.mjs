@@ -1,7 +1,7 @@
 /**
  * Симуляция N сессий с рандомным кэшаутом (без DOM).
  * node scripts/simulate-sessions.mjs [count] [bet] [profile]
- * profile: math4 | easy_b_1 | norm_b_1 | normal8 | hard | hard_b_1 (один профиль на весь прогон, как в UI)
+ * profile: math4 | easy_b_1 | norm_b_1 | normal8 | hard | hard_b_1 | hard_b_2 (один профиль на весь прогон, как в UI)
  */
 import fs from "fs";
 import path from "path";
@@ -43,7 +43,7 @@ const TILE_CRASH = math.TILE_CRASH;
 const TILE_BONUS = math.TILE_BONUS;
 const SESSION_COUNT = Number(process.argv[2]) || 50;
 const BET = Number(process.argv[3]) || 50;
-const VALID_PROFILES = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1"];
+const VALID_PROFILES = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1", "hard_b_2"];
 const PROFILE_ARG = process.argv[4] || "math4";
 const PROFILE_ID =
   PROFILE_ARG === "normal7"
