@@ -228,25 +228,29 @@
       width: 100%;
     }
     .math-profile-row {
-      display: flex;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
       width: 100%;
     }
     .math-profile-btn {
-      flex: 1 1 0;
+      width: 100%;
       min-width: 0;
-      padding: 5px 10px;
+      padding: 5px 6px;
       min-height: 28px;
       border: 1px solid #2e2e3a;
       border-radius: 8px;
       background: #14141c;
       color: #8b8b9e;
       font-family: "Inter", system-ui, sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       line-height: 16px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
@@ -1303,7 +1307,7 @@
         gap: 6px;
       }
       .math-profile-btn {
-        padding: 3px 6px;
+        padding: 3px 4px;
         min-height: 22px;
         border-radius: 6px;
         font-size: 10px;
