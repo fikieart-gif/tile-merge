@@ -1647,13 +1647,14 @@
         <button type="button" class="math-profile-btn" id="mathProfileHard" data-profile="hard" aria-pressed="false">Hard</button>
         <button type="button" class="math-profile-btn" id="mathProfileHardB1" data-profile="hard_b_1" aria-pressed="false">Hard_b_1</button>
         <button type="button" class="math-profile-btn" id="mathProfileHardB2" data-profile="hard_b_2" aria-pressed="false">Hard_b2</button>
+        <button type="button" class="math-profile-btn" id="mathProfileHardB3" data-profile="hard_b_3" aria-pressed="false">Hard_b3</button>
       </div>
     </div>
   </footer>
 </div>
 </div>
 
-<script src="assets/game-math.js?v=92"></script>
+<script src="assets/game-math.js?v=93"></script>
 <script src="assets/session-history.js?v=74"></script>
 <script src="assets/js/merge-flight.js?v=74"></script>
 <script>
@@ -1741,7 +1742,7 @@
     }
   }
 
-  const MATH_PROFILE_IDS = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1", "hard_b_2"];
+  const MATH_PROFILE_IDS = ["math4", "easy_b_1", "norm_b_1", "normal8", "hard", "hard_b_1", "hard_b_2", "hard_b_3"];
 
   function normalizeMathProfileId(profileId) {
     if (profileId === "math2" || profileId === "math3") return "math4";
@@ -1920,7 +1921,7 @@
     random: {
       title: "50 сессий",
       text:
-        "Быстро прогоняет 50 игр по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2).\n\n" +
+        "Быстро прогоняет 50 игр по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2/Hard_b3).\n\n" +
         "Ставка фиксированная — $50. Исход каждой сессии случайный: кэшаут, бомба или «нет пар». " +
         "Момент кэшаута тоже выбирается наугад.\n\n" +
         "Если баланс не хватает на ставку, оставшиеся сессии не играются. Пополнения баланса нет.\n\n" +
@@ -1929,7 +1930,7 @@
     pasha: {
       title: "Стратегия Паши",
       text:
-        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2) и фиксированным правилам:\n\n" +
+        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2/Hard_b3) и фиксированным правилам:\n\n" +
         "• Дефолт: ставка $50, игра до упора (бомба или «нет пар»).\n" +
         "• После бомбы: ставка $250, кэшаут только при x2 и выше.\n" +
         "• После прибыли $250+ за одну игру — сброс на $50 и снова игра до упора.\n" +
@@ -1938,7 +1939,7 @@
     x1: {
       title: "Вывод при >= x1",
       text:
-        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2) и ставке с листа.\n\n" +
+        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2/Hard_b3) и ставке с листа.\n\n" +
         "Играем до x1 и выше, затем сразу кэшаут. " +
         "Если раньше выпала бомба или «нет пар» — сессия завершается как обычно.\n\n" +
         "Если баланс обнулился — остаётся $0, пополнения нет.",
@@ -1946,7 +1947,7 @@
     adaptive: {
       title: "Адаптивная стратегия",
       text:
-        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2), ставка $50.\n\n" +
+        "50 сессий по выбранной математике (Easy/Easy_b1/Norm_b_1/8/Hard/Hard_b_1/Hard_b2/Hard_b3), ставка $50.\n\n" +
         "Стратегия (R0=" + ADAPTIVE_STRATEGY_R0 + ", K=" + ADAPTIVE_STRATEGY_K + "):\n" +
         "• минимум R0 раундов — кэшаут раньше невозможен;\n" +
         "• после R0-го раунда — играем, пока на доске ≤ K пустых клеток;\n" +
@@ -4417,6 +4418,9 @@
   });
   document.getElementById("mathProfileHardB2").addEventListener("click", function () {
     switchMathProfile("hard_b_2");
+  });
+  document.getElementById("mathProfileHardB3").addEventListener("click", function () {
+    switchMathProfile("hard_b_3");
   });
   if (settingsButton) {
     settingsButton.addEventListener("click", function () {

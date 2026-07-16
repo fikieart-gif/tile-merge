@@ -1,6 +1,6 @@
 /**
  * Чистая математика и правила поля Merge (без DOM).
- * Профили Easy / Easy_b1 / Norm_b_1 / Normal8 / Hard / Hard_b_1 / Hard_b2 — setActiveProfile().
+ * Профили Easy / Easy_b1 / Norm_b_1 / Normal8 / Hard / Hard_b_1 / Hard_b2 / Hard_b3 — setActiveProfile().
  */
 (function (global) {
   "use strict";
@@ -356,6 +356,20 @@
     return bombProb;
   }
 
+  function computeHardB3BombProb(totalCoeff, roundNumber, bonusAlreadyAppeared) {
+    const BOMB_P = 0.35;
+    let bombProb = BOMB_P;
+    if (roundNumber === 1) bombProb *= 1.28;
+    if (roundNumber === 2) bombProb *= 1.15;
+    if (roundNumber === 3) bombProb *= 1.13;
+    if (roundNumber === 5) bombProb *= 0.9;
+    if (roundNumber === 6) bombProb *= 0.55;
+    if (roundNumber === 7) bombProb *= 0.55;
+    if (roundNumber >= 8) bombProb *= 0.6;
+    if (bonusAlreadyAppeared) bombProb *= 1.5;
+    return bombProb;
+  }
+
   function computeHardBonusProb(roundNumber, bonusAlreadyAppeared) {
     const BONUS_P = 0.00836;
     let prob = BONUS_P;
@@ -466,6 +480,20 @@
     computeBonusProb: computeHardBonusProb,
   };
 
+  const HARD_B_3_PROFILE_SPEC = {
+    c1: 0.012098,
+    g: 1.7093,
+    bonusTileCoeff: 5.0,
+    initialSessionCoeff: 1.0,
+    singleBombRollPerRound: true,
+    stageThresholds: [1.23249, 2.22738, 3.36854, 13.36854],
+    alphaStages: [0.54723, 0.64005, 0.31724, 0.251724, 0.1051724],
+    factorsBelowOne: { existing: 1, new: 1 },
+    factorsAboveOne: { existing: 0.31535, new: 2.18834 },
+    computeBombProb: computeHardB3BombProb,
+    computeBonusProb: computeHardBonusProb,
+  };
+
   const EASY = createMathProfile(
     Object.assign({ id: "math4", label: "Easy" }, EASY_PROFILE_SPEC)
   );
@@ -486,6 +514,9 @@
   );
   const HARD_B_2 = createMathProfile(
     Object.assign({ id: "hard_b_2", label: "Hard_b2" }, HARD_B_2_PROFILE_SPEC)
+  );
+  const HARD_B_3 = createMathProfile(
+    Object.assign({ id: "hard_b_3", label: "Hard_b3" }, HARD_B_3_PROFILE_SPEC)
   );
 
   function applyGravityWithSpawnMask(levels, spawnMask) {
@@ -594,6 +625,7 @@
     hard: HARD,
     hard_b_1: HARD_B_1,
     hard_b_2: HARD_B_2,
+    hard_b_3: HARD_B_3,
   };
 
   let activeProfileId = "math4";
